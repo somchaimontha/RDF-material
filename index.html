@@ -50,6 +50,44 @@
     .hover-brand:hover { color: var(--teal); }
     select { background-color: var(--cream) !important; }
 
+    /* ===== Bottom nav (mobile) — sidebar-to-bottom-nav pattern adapted from
+       rdf-billing-app's responsive nav: the top tab row is desktop-only;
+       below the breakpoint it's replaced by a fixed bottom tab bar. ===== */
+    .bottom-nav { display: none; }
+    @media (max-width: 768px) {
+      #nav-menu { display: none; }
+      body { padding-bottom: 76px; }
+      .bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0; left: 0;
+        width: 100%;
+        height: 64px;
+        background: rgba(255,255,255,0.94);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-top: 1px solid var(--border-hairline);
+        box-shadow: 0 -4px 20px rgba(0,0,0,.08);
+        z-index: 1000;
+        justify-content: space-around;
+        align-items: center;
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      .bottom-nav-item {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        flex: 1; height: 100%;
+        color: var(--text-secondary);
+        font-size: 11px; font-weight: 600;
+        cursor: pointer; text-decoration: none; border: none; background: none;
+        transition: color .2s ease, transform .2s ease;
+      }
+      .bottom-nav-item i { font-size: 20px; margin-bottom: 4px; transition: transform .2s ease; }
+      .bottom-nav-item.active { color: var(--teal-dark); }
+      .bottom-nav-item.active i { transform: translateY(-2px); }
+      .bottom-nav-item:active { transform: scale(0.95); }
+      #printBar { bottom: 78px; }
+    }
+
     /* ===== Buttons: pill shape, colored glow (Flip7 language) ===== */
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -92,6 +130,11 @@
       gap: 12px;
       box-shadow: var(--shadow-card);
     }
+    .stat-clickable { cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; }
+    .stat-clickable:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.12); }
+    .stat-clickable:active { transform: translateY(0) scale(0.98); }
+    .cat-row { cursor: pointer; border-radius: 8px; transition: background-color .12s ease; }
+    .cat-row:hover { background: var(--teal-bg); }
     .stat-icon {
       width: 40px; height: 40px; flex-shrink: 0;
       border-radius: 12px;
@@ -158,8 +201,8 @@
       flex-direction: column;
       align-items: center;
       box-sizing: border-box;
-      width: 210px;
-      height: 248px;
+      width: 220px;
+      height: 300px;
       margin: 8px;
       padding: 12px 10px;
       text-align: center;
@@ -172,7 +215,7 @@
     .print-label img { width: 150px; height: 150px; flex-shrink: 0; }
     .print-label .pl-text {
       width: 100%;
-      height: 62px;
+      height: 110px;
       margin-top: 6px;
       display: flex;
       flex-direction: column;
@@ -210,6 +253,19 @@
     </div>
   </nav>
 
+  <!-- Bottom nav: shown instead of the top tab row once the screen is
+       squeezed narrow (mobile) — mirrors rdf-billing-app's responsive nav -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <button class="bottom-nav-item active" id="bnav-dashboard" onclick="switchTab('dashboard')">
+      <i class="fas fa-list"></i>
+      รายการ
+    </button>
+    <button class="bottom-nav-item" id="bnav-add" onclick="switchTab('add')">
+      <i class="fas fa-plus-circle"></i>
+      เพิ่มใหม่
+    </button>
+  </nav>
+
   <!-- Loading Spinner -->
   <div id="loading" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex justify-center items-center">
     <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
@@ -222,7 +278,7 @@
 
       <!-- Stat Tiles -->
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div class="stat-tile">
+        <div class="stat-tile stat-clickable" onclick="clearFilters()" title="ดูทั้งหมด">
           <div class="stat-icon tone-neutral"><i class="fas fa-boxes-stacked"></i></div>
           <div>
             <p class="stat-label">ครุภัณฑ์ทั้งหมด</p>
@@ -236,28 +292,28 @@
             <p class="stat-value" id="statValue">0 บ.</p>
           </div>
         </div>
-        <div class="stat-tile">
+        <div class="stat-tile stat-clickable" onclick="filterByStatus('ใช้งานได้')" title="ดูเฉพาะที่ใช้งานได้">
           <div class="stat-icon tone-good"><i class="fas fa-check-circle"></i></div>
           <div>
             <p class="stat-label">ใช้งานได้</p>
             <p class="stat-value" id="statOk">0</p>
           </div>
         </div>
-        <div class="stat-tile">
+        <div class="stat-tile stat-clickable" onclick="filterByStatus('ชำรุด')" title="ดูเฉพาะที่ชำรุด">
           <div class="stat-icon tone-coral"><i class="fas fa-triangle-exclamation"></i></div>
           <div>
             <p class="stat-label">ชำรุด</p>
             <p class="stat-value" id="statBroken">0</p>
           </div>
         </div>
-        <div class="stat-tile">
+        <div class="stat-tile stat-clickable" onclick="filterByStatus('ส่งซ่อม')" title="ดูเฉพาะที่ส่งซ่อม">
           <div class="stat-icon tone-gold"><i class="fas fa-screwdriver-wrench"></i></div>
           <div>
             <p class="stat-label">ส่งซ่อม</p>
             <p class="stat-value" id="statRepair">0</p>
           </div>
         </div>
-        <div class="stat-tile">
+        <div class="stat-tile stat-clickable" onclick="filterByStatus('ถูกยืมอยู่')" title="ดูเฉพาะที่ถูกยืมอยู่">
           <div class="stat-icon tone-sky"><i class="fas fa-hand-holding"></i></div>
           <div>
             <p class="stat-label">ถูกยืมอยู่</p>
@@ -316,6 +372,7 @@
     <div id="printBar" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 bg-[#2E3A38] text-white rounded-full shadow-lg pl-5 pr-2 py-2 flex items-center gap-3 z-40">
       <span class="text-sm">เลือกแล้ว <b id="printBarCount">0</b> รายการ</span>
       <button onclick="printSelectedLabels()" class="btn btn-gold" style="min-height:36px; padding:0 16px; font-size:13px;" title="เลือก 'บันทึกเป็น PDF' ในหน้าต่างพิมพ์เพื่อส่งออกไฟล์"><i class="fas fa-print mr-1"></i> พิมพ์ / ส่งออก PDF</button>
+      <button onclick="openQrSettingsModal()" class="text-gray-300 hover:text-white text-sm px-2" title="ตั้งค่าข้อมูลบนป้าย QR"><i class="fas fa-gear"></i></button>
       <button onclick="clearSelection()" class="text-gray-300 hover:text-white text-sm px-2">ล้าง</button>
     </div>
 
@@ -466,9 +523,12 @@
                 <a id="v-qr-link" href="#" target="_blank" class="text-sm hover-brand hover:underline" style="color:var(--teal-dark)">เปิดรูปเต็ม</a>
                 <button onclick="downloadQrPng()" class="text-sm hover-brand hover:underline" style="color:var(--teal-dark)"><i class="fas fa-download"></i> ดาวน์โหลด PNG</button>
               </div>
-              <button onclick="printSingleLabel()" class="btn btn-dark btn-block mt-3" title="เลือก 'บันทึกเป็น PDF' ในหน้าต่างพิมพ์เพื่อส่งออกไฟล์">
-                <i class="fas fa-print"></i> พิมพ์ / ส่งออกป้าย QR
-              </button>
+              <div class="flex gap-2 w-full mt-3">
+                <button onclick="printSingleLabel()" class="btn btn-dark flex-1" title="เลือก 'บันทึกเป็น PDF' ในหน้าต่างพิมพ์เพื่อส่งออกไฟล์">
+                  <i class="fas fa-print"></i> พิมพ์ / ส่งออกป้าย QR
+                </button>
+                <button onclick="openQrSettingsModal()" class="btn btn-neutral" title="ตั้งค่าข้อมูลบนป้าย QR"><i class="fas fa-gear"></i></button>
+              </div>
             </div>
           </div>
 
@@ -695,6 +755,26 @@
     </div>
   </div>
 
+  <!-- QR Label Settings Modal -->
+  <div id="qrSettingsModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-sm">
+      <div class="p-4 border-b flex justify-between items-center">
+        <h3 class="font-bold text-lg">ตั้งค่าข้อมูลบนป้าย QR</h3>
+        <button onclick="closeQrSettingsModal()" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <div class="p-4">
+        <p class="text-xs text-gray-500 mb-2">เลือกข้อมูลที่จะพิมพ์ใต้ QR (นอกจากตัว QR) — จะจำค่าที่เลือกไว้ให้ในเครื่องนี้</p>
+        <div id="qrFieldOptions" class="divide-y">
+          <!-- Checkboxes injected -->
+        </div>
+      </div>
+      <div class="p-4 border-t flex space-x-2">
+        <button onclick="closeQrSettingsModal()" class="btn btn-neutral flex-1">ยกเลิก</button>
+        <button onclick="saveQrSettingsModal()" class="btn btn-teal flex-1">บันทึกการตั้งค่า</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Print-only area: populated just before window.print(), hidden on screen -->
   <div id="printArea"></div>
 
@@ -723,10 +803,45 @@
       cleaning: 'fa-broom', sports: 'fa-basketball', kitchen: 'fa-utensils', others: 'fa-box'
     };
 
+    // ========== QR LABEL FIELD SETTINGS ==========
+    // Which asset fields print on a QR label, and in what order. User-picked,
+    // remembered in localStorage so it doesn't reset between visits.
+    const QR_FIELD_DEFS = [
+      { key: 'itemName',    label: 'ชื่อรายการ' },
+      { key: 'inventoryId', label: 'รหัสครุภัณฑ์' },
+      { key: 'location',    label: 'สถานที่' },
+      { key: 'category',    label: 'หมวดหมู่' },
+      { key: 'purchaseDate',label: 'วันที่ซื้อ' },
+      { key: 'price',       label: 'ราคา' },
+      { key: 'status',      label: 'สถานะ' },
+      { key: 'buyerName',   label: 'ผู้รับผิดชอบ' }
+    ];
+    const QR_FIELDS_STORAGE_KEY = 'rdf_qr_fields';
+    const QR_FIELDS_DEFAULT = ['itemName', 'inventoryId', 'location'];
+
+    function getQrFieldSettings() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(QR_FIELDS_STORAGE_KEY));
+        if (Array.isArray(saved) && saved.length > 0) return saved;
+      } catch (e) { /* ignore malformed storage, fall through to default */ }
+      return QR_FIELDS_DEFAULT.slice();
+    }
+
+    function saveQrFieldSettings(fields) {
+      localStorage.setItem(QR_FIELDS_STORAGE_KEY, JSON.stringify(fields));
+    }
+
+    function formatQrFieldValue(a, key) {
+      if (key === 'category') return CATEGORY_LABELS[a.category] || a.category || '';
+      if (key === 'price') return a.price ? parseFloat(a.price).toLocaleString() + ' บ.' : '';
+      return a[key] || '';
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
       if (SERVER_ACTION === "viewItem" && SERVER_ID) {
         // Hide Nav menus in View Mode
         document.getElementById('nav-menu').classList.add('hidden');
+        document.getElementById('bottom-nav').style.display = 'none'; // inline style beats the media-query rule reliably
         document.getElementById('view-dashboard').classList.add('hidden');
         document.getElementById('view-add').classList.add('hidden');
         document.getElementById('view-item').classList.remove('hidden');
@@ -747,15 +862,19 @@
       document.getElementById('view-add').classList.add('hidden');
       document.getElementById('tab-dashboard').classList.remove('nav-active', 'text-gray-500');
       document.getElementById('tab-add').classList.remove('nav-active', 'text-gray-500');
+      document.getElementById('bnav-dashboard').classList.remove('active');
+      document.getElementById('bnav-add').classList.remove('active');
 
       if(tab === 'dashboard') {
         document.getElementById('view-dashboard').classList.remove('hidden');
         document.getElementById('tab-dashboard').classList.add('nav-active');
         document.getElementById('tab-add').classList.add('text-gray-500');
+        document.getElementById('bnav-dashboard').classList.add('active');
       } else {
         document.getElementById('view-add').classList.remove('hidden');
         document.getElementById('tab-add').classList.add('nav-active');
         document.getElementById('tab-dashboard').classList.add('text-gray-500');
+        document.getElementById('bnav-add').classList.add('active');
       }
     }
 
@@ -901,7 +1020,7 @@
         const icon = CATEGORY_ICONS[r.key] || 'fa-box';
         const pct = maxCount > 0 ? Math.max((r.count / maxCount) * 100, 4) : 0;
         return `
-          <div class="cat-row">
+          <div class="cat-row" onclick="filterByCategory('${r.key}')" title="ดูเฉพาะหมวดนี้">
             <span class="cat-label"><i class="fas ${icon} text-gray-400 w-4"></i> ${label}</span>
             <div class="cat-track"><div class="cat-fill" style="width:${pct}%"></div></div>
             <span class="cat-value">${r.count}</span>
@@ -923,6 +1042,36 @@
       });
       document.getElementById('resultCount').innerText = `แสดง ${filtered.length} จาก ${allAssets.length} รายการ`;
       renderAssets(filtered);
+    }
+
+    // Stat tiles + category bars are clickable shortcuts into the same
+    // search/filter bar below, so "check the data" is one click away.
+    function scrollToList() {
+      document.getElementById('assetTableBody').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function filterByStatus(status) {
+      document.getElementById('statusFilter').value = status;
+      document.getElementById('catFilter').value = '';
+      document.getElementById('searchInput').value = '';
+      filterAssets();
+      scrollToList();
+    }
+
+    function filterByCategory(category) {
+      document.getElementById('catFilter').value = category;
+      document.getElementById('statusFilter').value = '';
+      document.getElementById('searchInput').value = '';
+      filterAssets();
+      scrollToList();
+    }
+
+    function clearFilters() {
+      document.getElementById('statusFilter').value = '';
+      document.getElementById('catFilter').value = '';
+      document.getElementById('searchInput').value = '';
+      filterAssets();
+      scrollToList();
     }
 
     // Single source of truth for status -> color mapping, reused by stat
@@ -1002,16 +1151,48 @@
     }
 
     function buildLabelHtml(a) {
+      const fields = getQrFieldSettings();
+      // First selected field prints bold/larger (like a title); the rest are
+      // smaller detail lines — mirrors the old fixed name/id/location look.
+      const lines = fields.map((key, i) => {
+        const value = formatQrFieldValue(a, key);
+        if (!value) return '';
+        const cls = i === 0 ? 'pl-name' : (i === 1 ? 'pl-id' : 'pl-loc');
+        return `<p class="${cls}">${value}</p>`;
+      }).join('');
       return `
         <div class="print-label">
           <img src="${a.qrcode}">
-          <div class="pl-text">
-            <p class="pl-name">${a.itemName || ''}</p>
-            <p class="pl-id">${a.inventoryId || ''}</p>
-            <p class="pl-loc">${a.location || ''}</p>
-          </div>
+          <div class="pl-text">${lines}</div>
         </div>
       `;
+    }
+
+    // ========== QR LABEL SETTINGS MODAL ==========
+    function openQrSettingsModal() {
+      const selected = getQrFieldSettings();
+      const container = document.getElementById('qrFieldOptions');
+      container.innerHTML = QR_FIELD_DEFS.map(f => `
+        <label class="flex items-center gap-2 py-1.5 text-sm cursor-pointer">
+          <input type="checkbox" class="qr-field-chk" value="${f.key}" ${selected.includes(f.key) ? 'checked' : ''}>
+          ${f.label}
+        </label>
+      `).join('');
+      document.getElementById('qrSettingsModal').classList.remove('hidden');
+    }
+
+    function closeQrSettingsModal() {
+      document.getElementById('qrSettingsModal').classList.add('hidden');
+    }
+
+    function saveQrSettingsModal() {
+      const checked = Array.from(document.querySelectorAll('.qr-field-chk:checked')).map(el => el.value);
+      if (checked.length === 0) { Swal.fire('เลือกอย่างน้อย 1 รายการ', '', 'warning'); return; }
+      // Keep the fixed QR_FIELD_DEFS order regardless of checkbox click order.
+      const ordered = QR_FIELD_DEFS.map(f => f.key).filter(k => checked.includes(k));
+      saveQrFieldSettings(ordered);
+      closeQrSettingsModal();
+      Swal.fire({ icon: 'success', title: 'บันทึกการตั้งค่าป้าย QR แล้ว', timer: 1200, showConfirmButton: false });
     }
 
     // Shrinks a label's text block font-size until it fits its fixed box —
