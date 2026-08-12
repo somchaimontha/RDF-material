@@ -775,6 +775,26 @@
     </div>
   </div>
 
+  <!-- QR Quick-preview Modal (from the dashboard's QR icon) -->
+  <div id="qrPreviewModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-sm">
+      <div class="p-4 border-b flex justify-between items-center">
+        <h3 class="font-bold text-lg">QR Code</h3>
+        <button onclick="closeQrPreviewModal()" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <div class="p-4 flex flex-col items-center">
+        <img id="qrPreviewImg" src="" alt="QR Code" class="w-40 h-40 border p-2 rounded mb-3">
+        <div id="qrPreviewInfo" class="w-full space-y-1 mb-3"><!-- Short info injected --></div>
+        <a id="qrPreviewRawLink" href="#" target="_blank" class="text-xs hover-brand hover:underline" style="color:var(--teal-dark)">เปิดรูป QR เต็ม</a>
+      </div>
+      <div class="p-4 border-t">
+        <a id="qrPreviewFullLink" href="#" target="_blank" class="btn btn-teal btn-block">
+          <i class="fas fa-circle-info"></i> ดูข้อมูลแบบเต็ม
+        </a>
+      </div>
+    </div>
+  </div>
+
   <!-- Print-only area: populated just before window.print(), hidden on screen -->
   <div id="printArea"></div>
 
@@ -831,9 +851,21 @@
       localStorage.setItem(QR_FIELDS_STORAGE_KEY, JSON.stringify(fields));
     }
 
+    // "2024-09-29" (ISO, from <input type="date">) -> "29/09/2567" (Thai วัน/เดือน/ปี พ.ศ.)
+    function formatThaiDate(dateStr) {
+      if (!dateStr) return '';
+      const parts = String(dateStr).split('-');
+      if (parts.length !== 3) return dateStr; // unrecognized format -> show as-is rather than mangle it
+      const [y, m, d] = parts;
+      const buddhistYear = Number(y) + 543;
+      if (!isFinite(buddhistYear)) return dateStr;
+      return `${d}/${m}/${buddhistYear}`;
+    }
+
     function formatQrFieldValue(a, key) {
       if (key === 'category') return CATEGORY_LABELS[a.category] || a.category || '';
       if (key === 'price') return a.price ? parseFloat(a.price).toLocaleString() + ' บ.' : '';
+      if (key === 'purchaseDate') return formatThaiDate(a.purchaseDate);
       return a[key] || '';
     }
 
@@ -1114,7 +1146,7 @@
               <span class="badge tone-${tone}">${a.status}</span>
               ${isOverdue ? `<span class="text-[10px] font-bold" style="color:var(--error)">เกินกำหนดคืน</span>` : ''}
             </div>
-            <a href="${a.qrcode}" target="_blank" class="text-gray-400 hover-brand flex-shrink-0" title="ดู QR"><i class="fas fa-qrcode text-lg"></i></a>
+            <button onclick="showQrPreview('${a.inventoryId}')" class="text-gray-400 hover-brand flex-shrink-0" title="ดู QR"><i class="fas fa-qrcode text-lg"></i></button>
           </div>
         `;
       });
@@ -1166,6 +1198,35 @@
           <div class="pl-text">${lines}</div>
         </div>
       `;
+    }
+
+    // ========== QR QUICK-PREVIEW MODAL ==========
+    // Clicking the QR icon on a dashboard card shows the QR plus a short
+    // summary (same fields chosen in the print-label settings) instead of
+    // jumping straight to either the raw QR image or the full detail page —
+    // the full page is still one tap away via "ดูข้อมูลแบบเต็ม".
+    function showQrPreview(id) {
+      const a = allAssets.find(x => x.inventoryId === id);
+      if (!a) return;
+
+      const fields = getQrFieldSettings();
+      const lines = fields.map(key => {
+        const value = formatQrFieldValue(a, key);
+        if (!value) return '';
+        const def = QR_FIELD_DEFS.find(f => f.key === key);
+        const label = def ? def.label : key;
+        return `<p class="text-sm flex justify-between gap-3"><span class="text-gray-500">${label}</span><span class="font-semibold text-right">${value}</span></p>`;
+      }).join('');
+
+      document.getElementById('qrPreviewImg').src = a.qrcode;
+      document.getElementById('qrPreviewInfo').innerHTML = lines || '<p class="text-sm text-gray-400 text-center">ไม่มีข้อมูลย่อให้แสดง</p>';
+      document.getElementById('qrPreviewRawLink').href = a.qrcode;
+      document.getElementById('qrPreviewFullLink').href = `${WEBAPP_URL}?action=viewItem&id=${encodeURIComponent(a.inventoryId)}`;
+      document.getElementById('qrPreviewModal').classList.remove('hidden');
+    }
+
+    function closeQrPreviewModal() {
+      document.getElementById('qrPreviewModal').classList.add('hidden');
     }
 
     // ========== QR LABEL SETTINGS MODAL ==========
