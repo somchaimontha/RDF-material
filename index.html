@@ -277,14 +277,26 @@
   </nav>
 
   <!-- Loading Spinner -->
-  <div id="loading" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex justify-center items-center">
+  <div id="loading" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex flex-col justify-center items-center">
     <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
+    <p id="loadingHint" class="hidden text-white text-sm max-w-xs text-center px-4">กำลังโหลดข้อมูล... หากไม่ได้เปิดเว็บนี้มาสักพัก เซิร์ฟเวอร์อาจใช้เวลาถึง 1 นาทีในการเริ่มทำงาน กรุณารอสักครู่</p>
   </div>
 
   <main class="max-w-5xl mx-auto p-4 pb-20">
 
     <!-- ==================== DASHBOARD VIEW ==================== -->
     <div id="view-dashboard" class="space-y-4 hidden">
+
+      <!-- Shown instead of the list when the visitor isn't logged in — the
+           full inventory (all items, values, locations) requires login now;
+           only a single item's page reached by scanning its QR code is public. -->
+      <div id="dashboardLockedGate" class="hidden text-center py-16 space-y-3">
+        <i class="fas fa-lock text-4xl" style="color:var(--teal)"></i>
+        <p class="text-gray-600">ต้องเข้าสู่ระบบก่อนจึงจะดูรายการครุภัณฑ์ทั้งหมดได้</p>
+        <button onclick="loadAssets()" class="btn btn-teal">เข้าสู่ระบบ</button>
+      </div>
+
+      <div id="dashboardContent" class="space-y-4">
 
       <!-- Stat Tiles -->
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -376,6 +388,8 @@
       <div id="assetTableBody" class="space-y-3">
         <!-- Cards injected -->
       </div>
+
+      </div><!-- /#dashboardContent -->
     </div>
 
     <!-- Floating bar: appears when rows are selected for batch QR printing -->
@@ -495,7 +509,7 @@
          scan (?action=viewItem&id=...), and (2) an in-page popup opened by
          clicking an item in the dashboard list — closeAssetDetailModal()
          tells the two apart and does the right thing for each. -->
-    <div id="view-item" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 overflow-y-auto p-4">
+    <div id="view-item" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto p-4">
       <div class="bg-white rounded-xl shadow-md overflow-hidden max-w-2xl mx-auto my-6 relative">
         <button onclick="closeAssetDetailModal()" class="absolute top-3 right-3 text-white text-2xl leading-none opacity-80 hover:opacity-100">&times;</button>
         <div class="p-6 text-white text-center" style="background: linear-gradient(135deg, var(--teal), var(--teal-dark));">
@@ -535,7 +549,7 @@
             <div class="flex flex-col items-center">
               <img id="v-qr" src="" alt="QR Code" class="w-40 h-40 border p-2 rounded">
               <div class="flex items-center gap-4 mt-2">
-                <a id="v-qr-link" href="#" target="_blank" class="text-sm hover-brand hover:underline" style="color:var(--teal-dark)">เปิดรูปเต็ม</a>
+                <button onclick="openQrFullView(currentViewAsset)" class="text-sm hover-brand hover:underline" style="color:var(--teal-dark)">เปิดรูปเต็ม</button>
                 <button onclick="downloadQrPng()" class="text-sm hover-brand hover:underline" style="color:var(--teal-dark)"><i class="fas fa-download"></i> ดาวน์โหลด PNG</button>
               </div>
               <div class="flex gap-2 w-full mt-3">
@@ -910,7 +924,7 @@
         <img id="qrPreviewPhoto" src="" alt="รูปครุภัณฑ์" class="hidden w-full h-32 object-cover rounded-lg mb-3">
         <img id="qrPreviewImg" src="" alt="QR Code" class="w-40 h-40 border p-2 rounded mb-3">
         <div id="qrPreviewInfo" class="w-full space-y-1 mb-3"><!-- Short info injected --></div>
-        <a id="qrPreviewRawLink" href="#" target="_blank" class="text-xs hover-brand hover:underline" style="color:var(--teal-dark)">เปิดรูป QR เต็ม</a>
+        <button id="qrPreviewRawLink" onclick="openQrFullView(_qrPreviewAsset)" class="text-xs hover-brand hover:underline" style="color:var(--teal-dark)">เปิดรูป QR เต็ม</button>
       </div>
       <div class="p-4 border-t">
         <a id="qrPreviewFullLink" href="#" target="_blank" class="btn btn-teal btn-block">
@@ -1006,14 +1020,29 @@
         document.getElementById('view-item').classList.remove('hidden');
         loadAssetById(SERVER_ID);
       } else {
-        callApi('setup', {}, true).catch(() => {}); // fire-and-forget header/column migration
+        // NOTE: no longer auto-calling setup() here — it's a one-time header/column
+        // migration that's already been run; calling it on every visitor's page load
+        // just added a 3rd concurrent request to the slow anonymous Apps Script
+        // endpoint for no benefit. Run it manually from the Apps Script editor if the
+        // sheet structure ever changes again.
         switchTab('dashboard');
         loadAssets();
       }
     });
 
+    let _loadingHintTimer = null;
     function showLoading(show) {
       document.getElementById('loading').classList.toggle('hidden', !show);
+      const hint = document.getElementById('loadingHint');
+      clearTimeout(_loadingHintTimer);
+      if (show) {
+        // Apps Script's anonymous-access endpoint can take a while to wake up
+        // (cold start) — if it's still loading after 5s, reassure the user
+        // instead of leaving a bare spinner that looks stuck/broken.
+        _loadingHintTimer = setTimeout(() => hint.classList.remove('hidden'), 5000);
+      } else {
+        hint.classList.add('hidden');
+      }
     }
 
     function switchTab(tab) {
@@ -1152,6 +1181,11 @@
       currentSession = session;
       sessionStorage.setItem('rdf_session', JSON.stringify(session));
       updateSessionUI();
+      // If the dashboard was showing its "login required" gate (e.g. the
+      // visitor logged in via the navbar button rather than the gate's own
+      // button), load the list now instead of leaving the gate up.
+      const gate = document.getElementById('dashboardLockedGate');
+      if (gate && !gate.classList.contains('hidden')) loadAssets();
     }
 
     function clearSession() {
@@ -1235,6 +1269,10 @@
       const session = currentSession || loadCachedSession();
       if (session) callApi('logout', { token: session.token }, false).catch(() => {});
       clearSession();
+      // The inventory list requires login — wipe what's on screen and re-gate
+      // the dashboard so data doesn't linger visible after logging out.
+      allAssets = [];
+      showLoginRequiredGate();
       Swal.fire({ icon: 'success', title: 'ออกจากระบบแล้ว', timer: 1000, showConfirmButton: false });
     }
 
@@ -1344,6 +1382,7 @@
       showLoading(true);
       try {
         await callServer('saveSystemSettings', { googleClientId });
+        try { localStorage.removeItem('rdf_system_settings'); } catch (e) { /* ignore */ }
         showLoading(false);
         Swal.fire('สำเร็จ', 'บันทึกแล้ว รีเฟรชหน้าเว็บเพื่อให้ปุ่ม Google Sign-In อัปเดต', 'success');
       } catch (err) {
@@ -1393,7 +1432,20 @@
     // network request for the GIS script either.
     async function initGoogleSignIn() {
       try {
-        const settings = await callApi('getSystemSettings', {}, true);
+        // Cache in localStorage for a day — this rarely changes, and skipping
+        // it shaves one of the (slow, anonymous-access) Apps Script calls off
+        // every page load.
+        const CACHE_KEY = 'rdf_system_settings';
+        const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+        let settings = null;
+        try {
+          const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+          if (cached && (Date.now() - cached.savedAt) < CACHE_TTL_MS) settings = cached.data;
+        } catch (e) { /* ignore corrupt cache */ }
+        if (!settings) {
+          settings = await callApi('getSystemSettings', {}, true);
+          try { localStorage.setItem(CACHE_KEY, JSON.stringify({ savedAt: Date.now(), data: settings })); } catch (e) { /* storage disabled/full -> skip caching */ }
+        }
         if (!settings.googleClientId) return;
         window.GOOGLE_CLIENT_ID = settings.googleClientId;
         const script = document.createElement('script');
@@ -1451,8 +1503,13 @@
     // ========== DASHBOARD ==========
     function loadAssets() {
       showLoading(true);
-      callApi('getAssets', {}, true)
+      // getAssets (the full inventory list) requires login now — callServer
+      // resolves/prompts for a session and attaches its token. A single
+      // item's page (loadAssetById, reached by scanning its QR code) stays
+      // public and is unaffected.
+      callServer('getAssets', {})
         .then(data => {
+          hideLoginRequiredGate();
           allAssets = data;
           renderStats(allAssets);
           renderCategoryBreakdown(allAssets);
@@ -1461,8 +1518,25 @@
         })
         .catch(err => {
           showLoading(false);
-          Swal.fire('Error', err.message, 'error');
+          // Cancelled the login prompt, or the session was rejected/expired
+          // (callServer already cleared it above) -> show the gate instead of
+          // a raw error popup so the visitor can just try logging in again.
+          if (err.message === 'ยกเลิกการดำเนินการ' || err.message.indexOf('เข้าสู่ระบบ') !== -1) {
+            showLoginRequiredGate();
+          } else {
+            Swal.fire('Error', err.message, 'error');
+          }
         });
+    }
+
+    function showLoginRequiredGate() {
+      document.getElementById('dashboardLockedGate').classList.remove('hidden');
+      document.getElementById('dashboardContent').classList.add('hidden');
+    }
+
+    function hideLoginRequiredGate() {
+      document.getElementById('dashboardLockedGate').classList.add('hidden');
+      document.getElementById('dashboardContent').classList.remove('hidden');
     }
 
     function renderStats(assets) {
@@ -1662,9 +1736,11 @@
     // summary (same fields chosen in the print-label settings) instead of
     // jumping straight to either the raw QR image or the full detail page —
     // the full page is still one tap away via "ดูข้อมูลแบบเต็ม".
+    let _qrPreviewAsset = null;
     function showQrPreview(id) {
       const a = allAssets.find(x => x.inventoryId === id);
       if (!a) return;
+      _qrPreviewAsset = a;
 
       const fields = getQrFieldSettings();
       const lines = fields.map(key => {
@@ -1677,7 +1753,6 @@
 
       document.getElementById('qrPreviewImg').src = a.qrcode;
       document.getElementById('qrPreviewInfo').innerHTML = lines || '<p class="text-sm text-gray-400 text-center">ไม่มีข้อมูลย่อให้แสดง</p>';
-      document.getElementById('qrPreviewRawLink').href = a.qrcode;
       document.getElementById('qrPreviewFullLink').href = `${WEBAPP_URL}?action=viewItem&id=${encodeURIComponent(a.inventoryId)}`;
 
       // Photo of the item itself, if one was uploaded — so the person
@@ -1759,21 +1834,72 @@
       document.getElementById('printArea').innerHTML = '';
     });
 
-    // Real forced download of the QR image (qrserver.com sends CORS headers,
-    // so fetching as a blob works even though it's a cross-origin image).
+    // Draws the QR code plus its item name + id onto a canvas, so a
+    // downloaded/opened image is never just a bare, unlabeled QR pattern
+    // (indistinguishable from every other item's QR at a glance — risks
+    // getting mixed up if printed/saved on its own). qrserver.com sends CORS
+    // headers, so the loaded image doesn't taint the canvas.
+    function buildLabeledQrCanvas(asset) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const qrSize = 300, padding = 18, textBlockHeight = 66;
+          const canvas = document.createElement('canvas');
+          canvas.width = qrSize + padding * 2;
+          canvas.height = qrSize + padding * 2 + textBlockHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, padding, padding, qrSize, qrSize);
+
+          ctx.textAlign = 'center';
+          const fontStack = '"Leelawadee UI","Tahoma",sans-serif'; // Thai-capable on Windows
+          const name = (asset.itemName || '').length > 30 ? asset.itemName.slice(0, 29) + '…' : (asset.itemName || '');
+          ctx.fillStyle = '#111827';
+          ctx.font = 'bold 20px ' + fontStack;
+          ctx.fillText(name, canvas.width / 2, qrSize + padding * 2 + 26);
+
+          ctx.fillStyle = '#4b5563';
+          ctx.font = '16px ' + fontStack;
+          ctx.fillText('รหัส: ' + (asset.inventoryId || ''), canvas.width / 2, qrSize + padding * 2 + 50);
+
+          resolve(canvas);
+        };
+        img.onerror = () => reject(new Error('โหลดรูป QR ไม่สำเร็จ'));
+        img.src = asset.qrcode;
+      });
+    }
+
+    // Opens the labeled QR (see above) in a new tab, in place of the old bare
+    // QR-only link.
+    async function openQrFullView(asset) {
+      if (!asset || !asset.qrcode) return;
+      try {
+        const canvas = await buildLabeledQrCanvas(asset);
+        canvas.toBlob(blob => {
+          if (!blob) { Swal.fire('เปิดรูปไม่สำเร็จ', '', 'error'); return; }
+          window.open(URL.createObjectURL(blob), '_blank');
+        }, 'image/png');
+      } catch (err) {
+        Swal.fire('เปิดรูปไม่สำเร็จ', err.message, 'error');
+      }
+    }
+
     async function downloadQrPng() {
       if (!currentViewAsset || !currentViewAsset.qrcode) return;
       try {
-        const res = await fetch(currentViewAsset.qrcode);
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'QR_' + currentViewAsset.inventoryId + '.png';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
+        const canvas = await buildLabeledQrCanvas(currentViewAsset);
+        canvas.toBlob(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'QR_' + currentViewAsset.inventoryId + '.png';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        }, 'image/png');
       } catch (err) {
         Swal.fire('ดาวน์โหลดไม่สำเร็จ', 'ไม่สามารถโหลดรูป QR ได้ ลองเปิดรูปเต็มแล้วบันทึกด้วยตนเอง', 'error');
       }
@@ -1858,7 +1984,6 @@
       document.getElementById('v-buyer').innerText = a.buyerName || '-';
 
       document.getElementById('v-qr').src = a.qrcode;
-      document.getElementById('v-qr-link').href = a.qrcode;
 
       // Borrow/Return button + info visibility
       const blockedBorrow = ['ถูกยืมอยู่', 'จำหน่ายแล้ว', 'สูญหาย'];
