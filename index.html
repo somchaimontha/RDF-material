@@ -136,6 +136,8 @@
     .stat-clickable:active { transform: translateY(0) scale(0.98); }
     .cat-row { cursor: pointer; border-radius: 8px; transition: background-color .12s ease; }
     .cat-row:hover { background: var(--teal-bg); }
+    #viewModeCardBtn, #viewModeTableBtn { color: #9ca3af; background: #fff; }
+    #viewModeCardBtn.active-view-btn, #viewModeTableBtn.active-view-btn { background: var(--teal); color: #fff; }
     .stat-icon {
       width: 40px; height: 40px; flex-shrink: 0;
       border-radius: 12px;
@@ -242,9 +244,15 @@
   <nav class="bg-white shadow-sm sticky top-0 z-50">
     <div class="max-w-5xl mx-auto px-4">
       <div class="flex justify-between items-center h-16">
-        <div class="flex items-center space-x-2 cursor-pointer" onclick="goHome()">
-          <img src="logo.png" alt="RDF" class="h-9 w-9 rounded-full object-contain">
-          <span class="font-extrabold text-xl text-gray-800">RDF Asset</span>
+        <div class="flex items-center gap-3">
+          <div class="flex items-center space-x-2 cursor-pointer" onclick="goHome()">
+            <img src="logo.png" alt="RDF" class="h-9 w-9 rounded-full object-contain">
+            <span class="font-extrabold text-xl text-gray-800">RDF Asset</span>
+          </div>
+          <span id="dbStatusIndicator" class="hidden sm:flex items-center gap-1.5 text-xs text-gray-400 cursor-pointer" onclick="showDbStatusDetail()" title="สถานะการเชื่อมต่อฐานข้อมูล">
+            <span id="dbStatusDot" class="inline-block w-2 h-2 rounded-full bg-gray-300"></span>
+            <span id="dbStatusText">ยังไม่ตรวจสอบ</span>
+          </span>
         </div>
         <div id="sessionInfo" class="hidden flex items-center gap-3 text-xs text-gray-500">
           <span><i class="fas fa-user-circle mr-1"></i><span id="sessionName">-</span></span>
@@ -309,7 +317,7 @@
             <p class="stat-value" id="statTotal">0</p>
           </div>
         </div>
-        <div class="stat-tile">
+        <div class="stat-tile stat-clickable" onclick="openValueBreakdownModal()" title="ดูรายละเอียดมูลค่า">
           <div class="stat-icon tone-neutral"><i class="fas fa-sack-dollar"></i></div>
           <div>
             <p class="stat-label">มูลค่ารวม</p>
@@ -379,16 +387,22 @@
         </select>
       </div>
 
-      <div class="flex items-center justify-between px-1">
+      <div class="flex items-center justify-between px-1 flex-wrap gap-2">
         <p class="text-xs text-gray-500" id="resultCount">แสดง 0 จาก 0 รายการ</p>
-        <label class="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
-          <input type="checkbox" id="selectAllChk" onchange="toggleSelectAll(this)">
-          เลือกทั้งหมด
-        </label>
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+            <input type="checkbox" id="selectAllChk" onchange="toggleSelectAll(this)">
+            เลือกทั้งหมด
+          </label>
+          <div class="flex rounded-lg border overflow-hidden text-xs">
+            <button id="viewModeCardBtn" onclick="setAssetViewMode('card')" class="px-3 py-1.5" title="มุมมองการ์ด"><i class="fas fa-grip"></i></button>
+            <button id="viewModeTableBtn" onclick="setAssetViewMode('table')" class="px-3 py-1.5 border-l" title="มุมมองตาราง"><i class="fas fa-table-list"></i></button>
+          </div>
+        </div>
       </div>
 
       <div id="assetTableBody" class="space-y-3">
-        <!-- Cards injected -->
+        <!-- Cards or table injected -->
       </div>
 
       </div><!-- /#dashboardContent -->
@@ -457,9 +471,10 @@
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">แหล่งเงิน</label>
-            <select id="addMoney" class="w-full border rounded-lg px-4 py-2 bg-white">
+            <select id="addMoney" onchange="toggleMoneyOtherInput(this)" class="w-full border rounded-lg px-4 py-2 bg-white">
               <option value="">-- ไม่ระบุ --</option>
             </select>
+            <input type="text" id="addMoneyOther" class="hidden w-full border rounded-lg px-4 py-2 mt-2" placeholder="ระบุแหล่งเงิน">
           </div>
 
           <div>
@@ -753,9 +768,10 @@
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">แหล่งเงิน</label>
-          <select id="eMoney" class="w-full border rounded-lg px-4 py-2 bg-white">
+          <select id="eMoney" onchange="toggleMoneyOtherInput(this)" class="w-full border rounded-lg px-4 py-2 bg-white">
             <option value="">-- ไม่ระบุ --</option>
           </select>
+          <input type="text" id="eMoneyOther" class="hidden w-full border rounded-lg px-4 py-2 mt-2" placeholder="ระบุแหล่งเงิน">
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">สถานที่ติดตั้ง/เก็บ</label>
@@ -977,6 +993,33 @@
     </div>
   </div>
 
+  <!-- Value Breakdown Modal: clicking "มูลค่ารวม" opens this — total value
+       summarized by category / status / funding source, computed client-side
+       from the already-loaded asset list (no extra API call needed). -->
+  <div id="valueBreakdownModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-md my-8">
+      <div class="p-4 border-b flex justify-between items-center">
+        <h3 class="font-bold text-lg">รายละเอียดมูลค่ารวม</h3>
+        <button onclick="closeValueBreakdownModal()" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <div class="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+        <div>
+          <h4 class="font-semibold text-sm mb-2">ตามหมวดหมู่</h4>
+          <div id="vbCategory" class="space-y-1"><!-- injected --></div>
+        </div>
+        <div class="border-t pt-3">
+          <h4 class="font-semibold text-sm mb-2">ตามสถานะ</h4>
+          <div id="vbStatus" class="space-y-1"><!-- injected --></div>
+        </div>
+        <div class="border-t pt-3">
+          <h4 class="font-semibold text-sm mb-2">ตามแหล่งเงิน</h4>
+          <div id="vbFunding" class="space-y-1"><!-- injected --></div>
+        </div>
+        <p class="text-xs text-gray-400 pt-1">คลิกแต่ละแถวเพื่อกรองรายการที่ตรงกัน</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Print-only area: populated just before window.print(), hidden on screen -->
   <div id="printArea"></div>
 
@@ -1053,6 +1096,7 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       updateSessionUI(); // reflect a cached session (from sessionStorage) immediately
+      applyAssetViewModeButtons();
       initGoogleSignIn(); // fire-and-forget; no-op if no Client ID has been configured yet
       if (SERVER_ACTION === "viewItem" && SERVER_ID) {
         // Hide Nav menus in View Mode
@@ -1176,6 +1220,7 @@
       } catch (networkErr) {
         if (_attempt < 3) { await sleep(400 * _attempt); return callApi(fn, payload, isRead, _attempt + 1); }
         reportClientError(fn, 'network error after retries: ' + networkErr.message);
+        setDbStatus('error', 'เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ');
         throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ ลองรีเฟรชหน้าเว็บอีกครั้ง');
       }
 
@@ -1185,11 +1230,44 @@
       } catch (parseErr) {
         if (_attempt < 3) { await sleep(400 * _attempt); return callApi(fn, payload, isRead, _attempt + 1); }
         reportClientError(fn, 'non-JSON response after retries (likely Apps Script anonymous-redirect flakiness)');
+        setDbStatus('error', 'เซิร์ฟเวอร์ตอบกลับผิดปกติ (Apps Script)');
         throw new Error('เซิร์ฟเวอร์ขัดข้องชั่วคราว (Apps Script) ลองรีเฟรชหน้าเว็บอีกครั้ง');
       }
 
+      // Getting this far — a real, parseable JSON reply — proves the
+      // frontend<->Apps Script<->Sheets round trip is actually working, even
+      // if this particular call turned out to be a business-logic error
+      // (json.success === false, e.g. "wrong password").
+      setDbStatus('ok');
       if (!json.success) throw new Error(json.message || 'เกิดข้อผิดพลาด');
       return json.data;
+    }
+
+    // ========== DATABASE CONNECTION STATUS (passive — piggybacks on real
+    // API calls above; no extra "ping" traffic sent to the already-flaky
+    // anonymous Apps Script endpoint just to test it) ==========
+    let dbStatus = { state: 'unknown', lastCheck: null, lastError: null };
+    function setDbStatus(state, errorMsg) {
+      dbStatus = { state, lastCheck: new Date(), lastError: state === 'error' ? errorMsg : null };
+      const dot = document.getElementById('dbStatusDot');
+      const text = document.getElementById('dbStatusText');
+      if (!dot || !text) return;
+      if (state === 'ok') {
+        dot.className = 'inline-block w-2 h-2 rounded-full bg-green-500';
+        text.innerText = 'เชื่อมต่อฐานข้อมูลปกติ';
+      } else {
+        dot.className = 'inline-block w-2 h-2 rounded-full bg-red-500';
+        text.innerText = 'เชื่อมต่อฐานข้อมูลมีปัญหา';
+      }
+    }
+    function showDbStatusDetail() {
+      const time = dbStatus.lastCheck ? dbStatus.lastCheck.toLocaleTimeString('th-TH') : '-';
+      Swal.fire({
+        icon: dbStatus.state === 'ok' ? 'success' : (dbStatus.state === 'error' ? 'error' : 'info'),
+        title: dbStatus.state === 'ok' ? 'เชื่อมต่อฐานข้อมูลปกติ' : (dbStatus.state === 'error' ? 'เชื่อมต่อฐานข้อมูลมีปัญหา' : 'ยังไม่มีข้อมูลการเชื่อมต่อ'),
+        html: `ตรวจสอบล่าสุด: ${time}` + (dbStatus.lastError ? `<br><span class="text-sm text-gray-500">${dbStatus.lastError}</span>` : '') +
+          (dbStatus.state === 'error' ? '<br><br><span class="text-xs text-gray-400">Apps Script บางครั้งตอบช้า/ผิดพลาดชั่วคราว — ลองรีเฟรชหน้าเว็บอีกครั้ง</span>' : '')
+      });
     }
 
     // Best-effort error report — a single plain fetch, deliberately NOT
@@ -1449,7 +1527,26 @@
       const names = fundingSources.filter(f => f.status === 'active').map(f => f.name);
       if (currentValue && !names.includes(currentValue)) names.unshift(currentValue);
       selectEl.innerHTML = '<option value="">-- ไม่ระบุ --</option>' +
-        names.map(n => `<option value="${n}" ${n === currentValue ? 'selected' : ''}>${n}</option>`).join('');
+        names.map(n => `<option value="${n}" ${n === currentValue ? 'selected' : ''}>${n}</option>`).join('') +
+        '<option value="__other__">อื่นๆ (ระบุเอง)</option>';
+      toggleMoneyOtherInput(selectEl);
+    }
+
+    // "อื่นๆ (ระบุเอง)" lets staff type a one-off funding source on the spot,
+    // without needing an admin to add it to the managed list first (that
+    // list is for the common/recurring ones — see "ตั้งค่า" menu).
+    function toggleMoneyOtherInput(selectEl) {
+      const otherInput = document.getElementById(selectEl.id + 'Other');
+      if (!otherInput) return;
+      const show = selectEl.value === '__other__';
+      otherInput.classList.toggle('hidden', !show);
+      if (!show) otherInput.value = '';
+    }
+
+    function getMoneySelectValue(selectId) {
+      const sel = document.getElementById(selectId);
+      if (sel.value === '__other__') return document.getElementById(selectId + 'Other').value.trim();
+      return sel.value;
     }
 
     async function refreshStaffList() {
@@ -1721,13 +1818,69 @@
       }).join('');
     }
 
+    // ========== VALUE BREAKDOWN MODAL ("มูลค่ารวม" tile) ==========
+    function itemValue(a) {
+      return (parseFloat(a.price) || 0) * (parseFloat(a.quantity) || 1);
+    }
+
+    // Generic "group allAssets by keyFn, sum value, render as bars" — reused
+    // for all three breakdowns (category / status / funding source) so they
+    // stay visually and behaviorally consistent.
+    function renderValueBreakdownGroup(containerId, keyFn, labelFn, onClickFn) {
+      const container = document.getElementById(containerId);
+      const groups = {};
+      allAssets.forEach(a => {
+        const key = keyFn(a) || 'ไม่ระบุ';
+        if (!groups[key]) groups[key] = { value: 0, count: 0 };
+        groups[key].value += itemValue(a);
+        groups[key].count += 1;
+      });
+      const rows = Object.keys(groups)
+        .map(key => ({ key, value: groups[key].value, count: groups[key].count }))
+        .sort((a, b) => b.value - a.value);
+
+      if (rows.length === 0) {
+        container.innerHTML = '<p class="text-sm text-gray-400">ยังไม่มีข้อมูล</p>';
+        return;
+      }
+      const maxValue = rows[0].value || 1;
+      container.innerHTML = rows.map(r => {
+        const pct = Math.max((r.value / maxValue) * 100, 4);
+        // "ไม่ระบุ" (unspecified) doesn't correspond to a real searchable value
+        // (the underlying field is just empty) — leave those rows unclickable.
+        const clickAttr = (onClickFn && r.key !== 'ไม่ระบุ') ? `onclick="${onClickFn}('${r.key.replace(/'/g, "\\'")}'); closeValueBreakdownModal();" title="ดูเฉพาะรายการนี้"` : '';
+        return `
+          <div class="cat-row" ${clickAttr}>
+            <span class="cat-label">${labelFn(r.key)}</span>
+            <div class="cat-track"><div class="cat-fill" style="width:${pct}%"></div></div>
+            <span class="cat-value text-xs">${r.value.toLocaleString()} บ. <span class="text-gray-400">(${r.count})</span></span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderValueBreakdown() {
+      renderValueBreakdownGroup('vbCategory', a => a.category, key => CATEGORY_LABELS[key] || key, 'filterByCategory');
+      renderValueBreakdownGroup('vbStatus', a => a.status, key => key, 'filterByStatus');
+      renderValueBreakdownGroup('vbFunding', a => a.sourceOfMoney, key => key, 'filterBySourceOfMoney');
+    }
+
+    function openValueBreakdownModal() {
+      renderValueBreakdown();
+      document.getElementById('valueBreakdownModal').classList.remove('hidden');
+    }
+
+    function closeValueBreakdownModal() {
+      document.getElementById('valueBreakdownModal').classList.add('hidden');
+    }
+
     function filterAssets() {
       const search = document.getElementById('searchInput').value.toLowerCase();
       const statusF = document.getElementById('statusFilter').value;
       const catF = document.getElementById('catFilter').value;
 
       const filtered = allAssets.filter(a => {
-        const matchSearch = (a.itemName?.toLowerCase().includes(search) || a.inventoryId?.toLowerCase().includes(search) || a.location?.toLowerCase().includes(search));
+        const matchSearch = (a.itemName?.toLowerCase().includes(search) || a.inventoryId?.toLowerCase().includes(search) || a.location?.toLowerCase().includes(search) || a.sourceOfMoney?.toLowerCase().includes(search));
         const matchStatus = !statusF || a.status === statusF;
         const matchCat = !catF || a.category === catF;
         return matchSearch && matchStatus && matchCat;
@@ -1758,6 +1911,16 @@
       scrollToList();
     }
 
+    // No dedicated funding-source filter dropdown — reuses the free-text
+    // search box (already matches sourceOfMoney, see filterAssets above).
+    function filterBySourceOfMoney(name) {
+      document.getElementById('searchInput').value = name;
+      document.getElementById('statusFilter').value = '';
+      document.getElementById('catFilter').value = '';
+      filterAssets();
+      scrollToList();
+    }
+
     function clearFilters() {
       document.getElementById('statusFilter').value = '';
       document.getElementById('catFilter').value = '';
@@ -1776,13 +1939,32 @@
       return 'neutral';
     }
 
+    // 'card' (default, mobile-friendly) or 'table' (denser, better for scanning
+    // many rows on a wide screen) — remembered per-browser like the QR settings.
+    let assetViewMode = localStorage.getItem('rdf_asset_view') || 'card';
+
+    function applyAssetViewModeButtons() {
+      document.getElementById('viewModeCardBtn').classList.toggle('active-view-btn', assetViewMode === 'card');
+      document.getElementById('viewModeTableBtn').classList.toggle('active-view-btn', assetViewMode === 'table');
+    }
+
+    function setAssetViewMode(mode) {
+      assetViewMode = mode;
+      localStorage.setItem('rdf_asset_view', mode);
+      applyAssetViewModeButtons();
+      filterAssets(); // re-render with the current filters, in the new mode
+    }
+
     function renderAssets(assets) {
       const container = document.getElementById('assetTableBody');
       if (assets.length === 0) {
         container.innerHTML = `<div class="bg-white rounded-xl shadow-sm p-8 text-center text-gray-400">ไม่พบข้อมูล</div>`;
         return;
       }
+      container.innerHTML = assetViewMode === 'table' ? buildAssetsTableHtml(assets) : buildAssetsCardHtml(assets);
+    }
 
+    function buildAssetsCardHtml(assets) {
       const todayStr = new Date().toISOString().slice(0, 10);
       let html = '';
       assets.forEach(a => {
@@ -1810,7 +1992,54 @@
           </div>
         `;
       });
-      container.innerHTML = html;
+      return html;
+    }
+
+    function buildAssetsTableHtml(assets) {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const rows = assets.map(a => {
+        const tone = getStatusTone(a.status);
+        const isOverdue = a.status === 'ถูกยืมอยู่' && a.dueDate && a.dueDate < todayStr;
+        const checked = selectedIds.has(a.inventoryId) ? 'checked' : '';
+        return `
+          <tr class="border-b hover:bg-gray-50">
+            <td class="py-2 pr-2"><input type="checkbox" class="asset-chk" data-id="${a.inventoryId}" ${checked} onchange="toggleAssetChk(this)"></td>
+            <td class="py-2 pr-3 whitespace-nowrap">
+              <a href="${WEBAPP_URL}?action=viewItem&id=${a.inventoryId}" onclick="event.preventDefault(); openAssetDetailModal('${a.inventoryId}')" class="font-semibold hover:underline" style="color:var(--teal-dark)">${a.inventoryId}</a>
+            </td>
+            <td class="py-2 pr-3 max-w-[220px] truncate" title="${a.itemName}">${a.itemName}</td>
+            <td class="py-2 pr-3 whitespace-nowrap text-gray-600">${CATEGORY_LABELS[a.category] || a.category || '-'}</td>
+            <td class="py-2 pr-3 whitespace-nowrap">
+              <span class="badge tone-${tone}">${a.status}</span>
+              ${isOverdue ? `<div class="text-[10px] font-bold mt-0.5" style="color:var(--error)">เกินกำหนดคืน</div>` : ''}
+            </td>
+            <td class="py-2 pr-3 max-w-[160px] truncate text-gray-600" title="${a.location || ''}">${a.location || '-'}</td>
+            <td class="py-2 pr-3 text-right whitespace-nowrap">${a.price ? parseFloat(a.price).toLocaleString() + ' บ.' : '-'}</td>
+            <td class="py-2 pl-1 text-right">
+              <button onclick="showQrPreview('${a.inventoryId}')" class="text-gray-400 hover-brand" title="ดู QR"><i class="fas fa-qrcode"></i></button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      return `
+        <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="text-left text-xs text-gray-500 border-b">
+                <th class="py-2 pr-2 font-medium"></th>
+                <th class="py-2 pr-3 font-medium">รหัส</th>
+                <th class="py-2 pr-3 font-medium">ชื่อรายการ</th>
+                <th class="py-2 pr-3 font-medium">หมวดหมู่</th>
+                <th class="py-2 pr-3 font-medium">สถานะ</th>
+                <th class="py-2 pr-3 font-medium">สถานที่</th>
+                <th class="py-2 pr-3 font-medium text-right">ราคา</th>
+                <th class="py-2 pl-1 font-medium"></th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `;
     }
 
     // ========== QR LABEL PRINTING ==========
@@ -2057,7 +2286,7 @@
           quantity: document.getElementById('addQty').value,
           unit: document.getElementById('addUnit').value,
           price: document.getElementById('addPrice').value,
-          sourceOfMoney: document.getElementById('addMoney').value,
+          sourceOfMoney: getMoneySelectValue('addMoney'),
           location: document.getElementById('addLoc').value,
           buyerName: document.getElementById('addBuyer').value,
           installer: document.getElementById('addInstaller').value,
@@ -2074,6 +2303,7 @@
         if (res.success) {
           Swal.fire('สำเร็จ', 'รหัส: ' + res.inventoryId, 'success');
           document.getElementById('addForm').reset();
+          document.getElementById('addMoneyOther').classList.add('hidden');
           loadAssets();
           switchTab('dashboard');
         }
@@ -2331,7 +2561,7 @@
           quantity: document.getElementById('eQty').value,
           unit: document.getElementById('eUnit').value,
           price: document.getElementById('ePrice').value,
-          sourceOfMoney: document.getElementById('eMoney').value,
+          sourceOfMoney: getMoneySelectValue('eMoney'),
           location: document.getElementById('eLoc').value,
           buyerName: document.getElementById('eBuyer').value,
           installer: document.getElementById('eInstaller').value,
