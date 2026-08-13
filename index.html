@@ -1274,13 +1274,26 @@
 
       let text;
       try {
-        const res = await fetch(url, opts);
+        // fetch() has no built-in timeout — if Apps Script's anonymous-access
+        // endpoint just hangs (connection open, no response) instead of
+        // erroring quickly, the browser would otherwise wait indefinitely.
+        // Cap each attempt at 25s so a hung request turns into a retry
+        // instead of an infinite spinner the user has to refresh out of.
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
+        let res;
+        try {
+          res = await fetch(url, { ...opts, signal: controller.signal });
+        } finally {
+          clearTimeout(timeoutId);
+        }
         text = await res.text();
       } catch (networkErr) {
         if (_attempt < 3) { await sleep(400 * _attempt); return callApi(fn, payload, isRead, _attempt + 1); }
-        reportClientError(fn, 'network error after retries: ' + networkErr.message);
-        setDbStatus('error', 'เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ');
-        throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ ลองรีเฟรชหน้าเว็บอีกครั้ง');
+        const timedOut = networkErr.name === 'AbortError';
+        reportClientError(fn, (timedOut ? 'timed out after retries: ' : 'network error after retries: ') + networkErr.message);
+        setDbStatus('error', timedOut ? 'เซิร์ฟเวอร์ไม่ตอบสนอง (timeout)' : 'เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ');
+        throw new Error(timedOut ? 'เซิร์ฟเวอร์ไม่ตอบสนองนานเกินไป ลองรีเฟรชหน้าเว็บอีกครั้ง' : 'เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ ลองรีเฟรชหน้าเว็บอีกครั้ง');
       }
 
       let json;
