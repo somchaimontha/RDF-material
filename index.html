@@ -245,6 +245,12 @@
           <i class="fas fa-boxes text-brand text-2xl"></i>
           <span class="font-extrabold text-xl text-gray-800">RDF Asset</span>
         </div>
+        <div id="sessionInfo" class="hidden flex items-center gap-3 text-xs text-gray-500">
+          <span><i class="fas fa-user-circle mr-1"></i><span id="sessionName">-</span></span>
+          <button id="navStaffManage" onclick="openStaffModal()" class="hidden hover-brand hover:underline">จัดการบัญชี</button>
+          <button onclick="openChangePasswordModal()" class="hover-brand hover:underline">เปลี่ยนรหัสผ่าน</button>
+          <button onclick="logoutUser()" class="hover-brand hover:underline">ออกจากระบบ</button>
+        </div>
       </div>
       <div class="flex space-x-4 overflow-x-auto pb-1" id="nav-menu">
         <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-active px-3 py-2 text-sm whitespace-nowrap"><i class="fas fa-list mr-1"></i> รายการครุภัณฑ์</button>
@@ -554,7 +560,7 @@
             <button onclick="openEditModal()" class="btn btn-gold-soft">
               <i class="fas fa-pen"></i> แก้ไขข้อมูล
             </button>
-            <button onclick="confirmDeleteAsset()" class="btn btn-coral-soft">
+            <button id="btn-delete" onclick="confirmDeleteAsset()" class="hidden btn btn-coral-soft">
               <i class="fas fa-trash"></i> ลบรายการ
             </button>
           </div>
@@ -589,10 +595,6 @@
             <option value="จำหน่ายแล้ว">จำหน่ายแล้ว</option>
             <option value="สูญหาย">สูญหาย</option>
           </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium mb-1">ผู้ดำเนินการ</label>
-          <input type="text" id="uOperator" placeholder="ชื่อของคุณ" class="w-full border rounded-lg px-4 py-2">
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">รายละเอียด/หมายเหตุ</label>
@@ -653,10 +655,6 @@
             <option value="ชำรุด">ชำรุด</option>
             <option value="ส่งซ่อม">ต้องส่งซ่อม</option>
           </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium mb-1">ผู้รับคืน</label>
-          <input type="text" id="rOperator" placeholder="ชื่อของคุณ" class="w-full border rounded-lg px-4 py-2">
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">หมายเหตุ</label>
@@ -732,10 +730,6 @@
           <label class="block text-sm font-medium mb-1">หมายเหตุ</label>
           <input type="text" id="eNote" class="w-full border rounded-lg px-4 py-2">
         </div>
-        <div>
-          <label class="block text-sm font-medium mb-1">ผู้ดำเนินการแก้ไข</label>
-          <input type="text" id="eOperator" placeholder="ชื่อของคุณ" class="w-full border rounded-lg px-4 py-2">
-        </div>
         <div class="border-t pt-3">
           <p class="text-xs text-gray-500 mb-2">แนบไฟล์ใหม่เฉพาะช่องที่ต้องการเปลี่ยน (เว้นว่างไว้ = ใช้ไฟล์เดิม)</p>
           <div class="grid grid-cols-2 gap-2 text-sm">
@@ -751,6 +745,86 @@
       <div class="p-4 border-t flex space-x-2">
         <button onclick="closeEditModal()" class="btn btn-neutral flex-1">ยกเลิก</button>
         <button onclick="submitEditForm()" class="btn btn-gold flex-1">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login Modal -->
+  <div id="loginModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-sm">
+      <div class="p-4 border-b flex justify-between items-center">
+        <h3 class="font-bold text-lg">เข้าสู่ระบบ</h3>
+        <button onclick="closeLoginModal(true)" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <form onsubmit="event.preventDefault(); submitLogin();">
+        <div class="p-4 space-y-3">
+          <div id="loginError" class="hidden text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
+          <div>
+            <label class="block text-sm font-medium mb-1">ชื่อผู้ใช้</label>
+            <input type="text" id="loginUsername" required autocomplete="username" class="w-full border rounded-lg px-4 py-2">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">รหัสผ่าน</label>
+            <input type="password" id="loginPassword" required autocomplete="current-password" class="w-full border rounded-lg px-4 py-2">
+          </div>
+        </div>
+        <div class="p-4 border-t flex space-x-2">
+          <button type="button" onclick="closeLoginModal(true)" class="btn btn-neutral flex-1">ยกเลิก</button>
+          <button type="submit" class="btn btn-gold flex-1">เข้าสู่ระบบ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Change Password Modal -->
+  <div id="changePasswordModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-sm">
+      <div class="p-4 border-b flex justify-between items-center">
+        <h3 class="font-bold text-lg">เปลี่ยนรหัสผ่าน</h3>
+        <button onclick="closeChangePasswordModal()" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <div class="p-4 space-y-3">
+        <div>
+          <label class="block text-sm font-medium mb-1">รหัสผ่านเดิม</label>
+          <input type="password" id="oldPassword" class="w-full border rounded-lg px-4 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">รหัสผ่านใหม่ (อย่างน้อย 8 ตัว มีทั้งตัวอักษรและตัวเลข)</label>
+          <input type="password" id="newPassword" class="w-full border rounded-lg px-4 py-2">
+        </div>
+      </div>
+      <div class="p-4 border-t flex space-x-2">
+        <button onclick="closeChangePasswordModal()" class="btn btn-neutral flex-1">ยกเลิก</button>
+        <button onclick="submitChangePassword()" class="btn btn-gold flex-1">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Staff Management Modal (admin only) -->
+  <div id="staffModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-lg my-8">
+      <div class="p-4 border-b flex justify-between items-center">
+        <h3 class="font-bold text-lg">จัดการบัญชีผู้ใช้</h3>
+        <button onclick="closeStaffModal()" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <div class="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+        <div>
+          <h4 class="font-semibold text-sm mb-2">รายชื่อผู้ใช้งาน</h4>
+          <div id="staffList" class="space-y-2"><!-- injected --></div>
+        </div>
+        <div class="border-t pt-3">
+          <h4 class="font-semibold text-sm mb-2">เพิ่มบัญชีใหม่</h4>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" id="newStaffUsername" placeholder="ชื่อผู้ใช้" class="border rounded-lg px-3 py-2 text-sm">
+            <input type="text" id="newStaffDisplayName" placeholder="ชื่อที่แสดง" class="border rounded-lg px-3 py-2 text-sm">
+            <input type="password" id="newStaffPassword" placeholder="รหัสผ่าน (อย่างน้อย 8 ตัว)" class="border rounded-lg px-3 py-2 text-sm">
+            <select id="newStaffRole" class="border rounded-lg px-3 py-2 text-sm bg-white">
+              <option value="staff">เจ้าหน้าที่ (staff)</option>
+              <option value="admin">ผู้ดูแลระบบ (admin)</option>
+            </select>
+          </div>
+          <button onclick="submitCreateStaff()" class="btn btn-teal btn-block mt-2">เพิ่มบัญชี</button>
+        </div>
       </div>
     </div>
   </div>
@@ -783,6 +857,7 @@
         <button onclick="closeQrPreviewModal()" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times text-xl"></i></button>
       </div>
       <div class="p-4 flex flex-col items-center">
+        <img id="qrPreviewPhoto" src="" alt="รูปครุภัณฑ์" class="hidden w-full h-32 object-cover rounded-lg mb-3">
         <img id="qrPreviewImg" src="" alt="QR Code" class="w-40 h-40 border p-2 rounded mb-3">
         <div id="qrPreviewInfo" class="w-full space-y-1 mb-3"><!-- Short info injected --></div>
         <a id="qrPreviewRawLink" href="#" target="_blank" class="text-xs hover-brand hover:underline" style="color:var(--teal-dark)">เปิดรูป QR เต็ม</a>
@@ -870,6 +945,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+      updateSessionUI(); // reflect a cached session (from sessionStorage) immediately
       if (SERVER_ACTION === "viewItem" && SERVER_ID) {
         // Hide Nav menus in View Mode
         document.getElementById('nav-menu').classList.add('hidden');
@@ -947,48 +1023,208 @@
       return json.data;
     }
 
-    // ========== ACCESS CONTROL (PIN) ==========
-    // A PIN is only required if the admin has set ADMIN_PIN in Script Properties.
-    // Cached in sessionStorage so staff aren't re-prompted for every action.
-    function getPin() {
-      const cached = sessionStorage.getItem('rdf_pin');
-      if (cached !== null) return Promise.resolve(cached);
-      return Swal.fire({
-        title: 'กรอกรหัส PIN เจ้าหน้าที่',
-        input: 'password',
-        inputPlaceholder: 'PIN',
-        showCancelButton: true,
-        confirmButtonText: 'ยืนยัน',
-        cancelButtonText: 'ยกเลิก'
-      }).then(result => {
-        if (!result.isConfirmed) throw new Error('ยกเลิกการดำเนินการ');
-        const pin = result.value || '';
-        return callApi('verifyPin', { pin: pin }, false)
-          .then(() => {
-            sessionStorage.setItem('rdf_pin', pin);
-            return pin;
-          })
-          .catch(err => {
-            Swal.fire('ข้อผิดพลาด', err.message, 'error');
-            throw err;
-          });
+    // ========== ACCESS CONTROL (username/password login + roles) ==========
+    // A session is only required for mutating actions — viewing/scanning a
+    // QR stays public. The session (token/username/role/displayName) is
+    // cached in sessionStorage; getSession() opens the login modal the first
+    // time (or again once a session has expired / been rejected).
+    let currentSession = null;
+    let _loginResolve = null, _loginReject = null;
+
+    function loadCachedSession() {
+      try {
+        const raw = sessionStorage.getItem('rdf_session');
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) { return null; }
+    }
+
+    function saveSession(session) {
+      currentSession = session;
+      sessionStorage.setItem('rdf_session', JSON.stringify(session));
+      updateSessionUI();
+    }
+
+    function clearSession() {
+      currentSession = null;
+      sessionStorage.removeItem('rdf_session');
+      updateSessionUI();
+    }
+
+    function updateSessionUI() {
+      const session = currentSession || loadCachedSession();
+      const box = document.getElementById('sessionInfo');
+      const adminBtn = document.getElementById('navStaffManage');
+      if (session) {
+        box.classList.remove('hidden');
+        document.getElementById('sessionName').innerText = session.displayName + ' (' + (session.role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่') + ')';
+        adminBtn.classList.toggle('hidden', session.role !== 'admin');
+      } else {
+        box.classList.add('hidden');
+        adminBtn.classList.add('hidden');
+      }
+    }
+
+    function getSession() {
+      const cached = currentSession || loadCachedSession();
+      if (cached) { currentSession = cached; return Promise.resolve(cached); }
+      return openLoginModal();
+    }
+
+    function openLoginModal() {
+      document.getElementById('loginUsername').value = '';
+      document.getElementById('loginPassword').value = '';
+      document.getElementById('loginError').classList.add('hidden');
+      document.getElementById('loginModal').classList.remove('hidden');
+      return new Promise((resolve, reject) => {
+        _loginResolve = resolve;
+        _loginReject = reject;
       });
     }
 
-    function clearPin() {
-      sessionStorage.removeItem('rdf_pin');
+    function closeLoginModal(cancelled) {
+      document.getElementById('loginModal').classList.add('hidden');
+      if (cancelled && _loginReject) _loginReject(new Error('ยกเลิกการดำเนินการ'));
+      _loginResolve = null; _loginReject = null;
     }
 
-    // Wraps a mutating API call: resolves the PIN, attaches it to the
-    // payload, and clears the cached PIN if the server rejects it.
+    function showLoginError(msg) {
+      const el = document.getElementById('loginError');
+      el.innerText = msg;
+      el.classList.remove('hidden');
+    }
+
+    async function submitLogin() {
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      if (!username || !password) { showLoginError('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน'); return; }
+      showLoading(true);
+      try {
+        const session = await callApi('login', { username, password }, false);
+        showLoading(false);
+        saveSession(session);
+        document.getElementById('loginModal').classList.add('hidden');
+        if (_loginResolve) _loginResolve(session);
+        _loginResolve = null; _loginReject = null;
+      } catch (err) {
+        showLoading(false);
+        showLoginError(err.message);
+      }
+    }
+
+    function logoutUser() {
+      const session = currentSession || loadCachedSession();
+      if (session) callApi('logout', { token: session.token }, false).catch(() => {});
+      clearSession();
+      Swal.fire({ icon: 'success', title: 'ออกจากระบบแล้ว', timer: 1000, showConfirmButton: false });
+    }
+
+    // Wraps a mutating API call: resolves the session, attaches its token to
+    // the payload, and clears the cached session if the server rejects it
+    // (expired/invalid) so the next action re-prompts the login modal.
     function callServer(fnName, payload) {
-      return getPin().then(pin => {
-        payload.pin = pin;
+      return getSession().then(session => {
+        payload.token = session.token;
         return callApi(fnName, payload, false).catch(err => {
-          if (err.message && err.message.indexOf('PIN') !== -1) clearPin();
+          if (err.message && err.message.indexOf('เข้าสู่ระบบ') !== -1) clearSession();
           throw err;
         });
       });
+    }
+
+    // ========== CHANGE PASSWORD ==========
+    function openChangePasswordModal() {
+      document.getElementById('oldPassword').value = '';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('changePasswordModal').classList.remove('hidden');
+    }
+
+    function closeChangePasswordModal() {
+      document.getElementById('changePasswordModal').classList.add('hidden');
+    }
+
+    async function submitChangePassword() {
+      const payload = {
+        oldPassword: document.getElementById('oldPassword').value,
+        newPassword: document.getElementById('newPassword').value
+      };
+      showLoading(true);
+      try {
+        const res = await callServer('changePassword', payload);
+        showLoading(false);
+        closeChangePasswordModal();
+        Swal.fire('สำเร็จ', res.message, 'success');
+      } catch (err) {
+        showLoading(false);
+        Swal.fire('ข้อผิดพลาด', err.message, 'error');
+      }
+    }
+
+    // ========== STAFF ACCOUNT MANAGEMENT (admin only) ==========
+    async function openStaffModal() {
+      document.getElementById('staffModal').classList.remove('hidden');
+      await refreshStaffList();
+    }
+
+    function closeStaffModal() {
+      document.getElementById('staffModal').classList.add('hidden');
+    }
+
+    async function refreshStaffList() {
+      const container = document.getElementById('staffList');
+      try {
+        const list = await callServer('listStaffAccounts', {});
+        container.innerHTML = list.map(s => `
+          <div class="flex items-center justify-between text-sm border rounded-lg px-3 py-2">
+            <div>
+              <div class="font-semibold">${s.displayName} <span class="text-gray-400 font-normal">(${s.username})</span></div>
+              <div class="text-xs text-gray-500">${s.role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่'} · ${s.status === 'active' ? 'ใช้งานอยู่' : 'ปิดใช้งาน'}</div>
+            </div>
+            <button onclick="toggleStaffStatus('${s.username}', '${s.status}')" class="text-xs px-3 py-1.5 rounded-full ${s.status === 'active' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">
+              ${s.status === 'active' ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
+            </button>
+          </div>
+        `).join('') || '<p class="text-sm text-gray-400">ไม่มีบัญชี</p>';
+      } catch (err) {
+        container.innerHTML = '';
+        Swal.fire('ข้อผิดพลาด', err.message, 'error');
+      }
+    }
+
+    async function submitCreateStaff() {
+      const payload = {
+        username: document.getElementById('newStaffUsername').value.trim(),
+        displayName: document.getElementById('newStaffDisplayName').value.trim(),
+        password: document.getElementById('newStaffPassword').value,
+        role: document.getElementById('newStaffRole').value
+      };
+      if (!payload.username || !payload.displayName || !payload.password) {
+        Swal.fire('กรอกข้อมูลไม่ครบ', 'กรุณากรอกชื่อผู้ใช้ ชื่อที่แสดง และรหัสผ่าน', 'warning');
+        return;
+      }
+      showLoading(true);
+      try {
+        await callServer('createStaffAccount', payload);
+        showLoading(false);
+        ['newStaffUsername', 'newStaffDisplayName', 'newStaffPassword'].forEach(id => document.getElementById(id).value = '');
+        Swal.fire('สำเร็จ', 'เพิ่มบัญชีเรียบร้อย', 'success');
+        refreshStaffList();
+      } catch (err) {
+        showLoading(false);
+        Swal.fire('ข้อผิดพลาด', err.message, 'error');
+      }
+    }
+
+    async function toggleStaffStatus(username, currentStatus) {
+      const newStatus = currentStatus === 'active' ? 'disabled' : 'active';
+      showLoading(true);
+      try {
+        await callServer('setStaffStatus', { username, status: newStatus });
+        showLoading(false);
+        refreshStaffList();
+      } catch (err) {
+        showLoading(false);
+        Swal.fire('ข้อผิดพลาด', err.message, 'error');
+      }
     }
 
     // ========== DASHBOARD ==========
@@ -1222,6 +1458,18 @@
       document.getElementById('qrPreviewInfo').innerHTML = lines || '<p class="text-sm text-gray-400 text-center">ไม่มีข้อมูลย่อให้แสดง</p>';
       document.getElementById('qrPreviewRawLink').href = a.qrcode;
       document.getElementById('qrPreviewFullLink').href = `${WEBAPP_URL}?action=viewItem&id=${encodeURIComponent(a.inventoryId)}`;
+
+      // Photo of the item itself, if one was uploaded — so the person
+      // scanning can confirm at a glance which physical thing this is.
+      const photoUrl = a.image || a.image2 || '';
+      const photoEl = document.getElementById('qrPreviewPhoto');
+      if (photoUrl) {
+        photoEl.src = photoUrl;
+        photoEl.classList.remove('hidden');
+      } else {
+        photoEl.classList.add('hidden');
+      }
+
       document.getElementById('qrPreviewModal').classList.remove('hidden');
     }
 
@@ -1392,6 +1640,11 @@
       const blockedBorrow = ['ถูกยืมอยู่', 'จำหน่ายแล้ว', 'สูญหาย'];
       document.getElementById('btn-borrow').classList.toggle('hidden', blockedBorrow.includes(a.status));
       document.getElementById('btn-return').classList.toggle('hidden', a.status !== 'ถูกยืมอยู่');
+
+      // Deleting is admin-only on the backend — hide the button entirely for
+      // anyone else instead of letting them hit a permission error.
+      const activeSession = currentSession || loadCachedSession();
+      document.getElementById('btn-delete').classList.toggle('hidden', !activeSession || activeSession.role !== 'admin');
       const borrowInfo = document.getElementById('v-borrow-info');
       if (a.status === 'ถูกยืมอยู่') {
         document.getElementById('v-borrower').innerText = a.currentBorrower || '-';
@@ -1439,7 +1692,6 @@
     function openStatusModal() {
       if (!currentViewAsset) return;
       document.getElementById('uStatus').value = currentViewAsset.status;
-      document.getElementById('uOperator').value = '';
       document.getElementById('uNote').value = '';
       document.getElementById('statusModal').classList.remove('hidden');
     }
@@ -1454,7 +1706,6 @@
         inventoryId: currentViewAsset.inventoryId,
         itemName: currentViewAsset.itemName,
         newStatus: document.getElementById('uStatus').value,
-        operator: document.getElementById('uOperator').value,
         note: document.getElementById('uNote').value
       };
 
@@ -1516,7 +1767,6 @@
       document.getElementById('rBorrowerDisplay').innerText = currentViewAsset.currentBorrower || '-';
       document.getElementById('rDueDisplay').innerText = currentViewAsset.dueDate || '-';
       document.getElementById('rStatus').value = 'ใช้งานได้';
-      document.getElementById('rOperator').value = '';
       document.getElementById('rNote').value = '';
       document.getElementById('returnModal').classList.remove('hidden');
     }
@@ -1531,7 +1781,6 @@
         inventoryId: currentViewAsset.inventoryId,
         itemName: currentViewAsset.itemName,
         returnStatus: document.getElementById('rStatus').value,
-        operator: document.getElementById('rOperator').value,
         note: document.getElementById('rNote').value
       };
 
@@ -1563,7 +1812,6 @@
       document.getElementById('eBuyer').value = a.buyerName || '';
       document.getElementById('eInstaller').value = a.installer || '';
       document.getElementById('eNote').value = a.note || '';
-      document.getElementById('eOperator').value = '';
       ['eImg1', 'eImg2', 'eRcpt1', 'eRcpt2', 'eRcpt3', 'eRcpt4'].forEach(id => document.getElementById(id).value = '');
       document.getElementById('editModal').classList.remove('hidden');
     }
@@ -1597,7 +1845,6 @@
           buyerName: document.getElementById('eBuyer').value,
           installer: document.getElementById('eInstaller').value,
           note: document.getElementById('eNote').value,
-          operator: document.getElementById('eOperator').value,
           image: await toBase64(document.getElementById('eImg1').files[0]),
           image2: await toBase64(document.getElementById('eImg2').files[0]),
           receipt: await toBase64(document.getElementById('eRcpt1').files[0]),
@@ -1623,9 +1870,6 @@
       const result = await Swal.fire({
         title: 'ยืนยันการลบรายการ',
         html: 'ต้องการลบ <b>' + currentViewAsset.itemName + '</b> หรือไม่? (ซ่อนจากระบบ ไม่ลบถาวร)',
-        input: 'text',
-        inputLabel: 'ชื่อผู้ดำเนินการ',
-        inputPlaceholder: 'ชื่อของคุณ',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'ลบ',
@@ -1638,7 +1882,6 @@
         rowIndex: currentViewAsset._rowIndex,
         inventoryId: currentViewAsset.inventoryId,
         itemName: currentViewAsset.itemName,
-        operator: result.value || '',
         note: ''
       };
 
