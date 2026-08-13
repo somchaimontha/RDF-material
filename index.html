@@ -249,6 +249,7 @@
         <div id="sessionInfo" class="hidden flex items-center gap-3 text-xs text-gray-500">
           <span><i class="fas fa-user-circle mr-1"></i><span id="sessionName">-</span></span>
           <button id="navStaffManage" onclick="openStaffModal()" class="hidden hover-brand hover:underline">จัดการบัญชี</button>
+          <button id="navSettings" onclick="openSettingsModal()" class="hidden hover-brand hover:underline">ตั้งค่า</button>
           <button onclick="openProfileModal()" class="hover-brand hover:underline">แก้ไขข้อมูลส่วนตัว</button>
           <button onclick="openChangePasswordModal()" class="hover-brand hover:underline">เปลี่ยนรหัสผ่าน</button>
           <button onclick="logoutUser()" class="hover-brand hover:underline">ออกจากระบบ</button>
@@ -422,6 +423,11 @@
             <input type="text" id="addName" required class="w-full border rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500" placeholder="เช่น แอร์ Mitsubishi 12000 BTU">
           </div>
 
+          <div class="col-span-full">
+            <label class="block text-sm font-medium mb-1">คำอธิบาย/รายละเอียด</label>
+            <textarea id="addDescription" rows="2" class="w-full border rounded-lg px-4 py-2" placeholder="อธิบายลักษณะ/สเปค/จุดสังเกตของอุปกรณ์ชิ้นนี้ (ไม่บังคับ)"></textarea>
+          </div>
+
           <div>
             <label class="block text-sm font-medium mb-1">หมวดหมู่ <span class="text-red-500">*</span></label>
             <select id="addCat" required class="w-full border rounded-lg px-4 py-2 bg-white">
@@ -451,7 +457,9 @@
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">แหล่งเงิน</label>
-            <input type="text" id="addMoney" class="w-full border rounded-lg px-4 py-2" placeholder="เช่น เงิน นร.นศ.">
+            <select id="addMoney" class="w-full border rounded-lg px-4 py-2 bg-white">
+              <option value="">-- ไม่ระบุ --</option>
+            </select>
           </div>
 
           <div>
@@ -539,6 +547,11 @@
               <p class="text-gray-500">ผู้จัดซื้อ</p>
               <p class="font-semibold text-gray-900" id="v-buyer">-</p>
             </div>
+          </div>
+
+          <div id="v-description-wrap" class="hidden">
+            <p class="text-gray-500 text-sm mb-1">คำอธิบาย/รายละเอียด</p>
+            <p class="text-gray-800 text-sm whitespace-pre-line" id="v-description"></p>
           </div>
 
           <div id="v-images" class="grid grid-cols-2 gap-2 hidden">
@@ -709,6 +722,10 @@
           <input type="text" id="eName" class="w-full border rounded-lg px-4 py-2">
         </div>
         <div>
+          <label class="block text-sm font-medium mb-1">คำอธิบาย/รายละเอียด</label>
+          <textarea id="eDescription" rows="2" class="w-full border rounded-lg px-4 py-2"></textarea>
+        </div>
+        <div>
           <label class="block text-sm font-medium mb-1">หมวดหมู่</label>
           <select id="eCat" class="w-full border rounded-lg px-4 py-2 bg-white">
             <option value="electrical">อุปกรณ์ไฟฟ้า/อิเล็กทรอนิกส์</option>
@@ -736,7 +753,9 @@
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">แหล่งเงิน</label>
-          <input type="text" id="eMoney" class="w-full border rounded-lg px-4 py-2">
+          <select id="eMoney" class="w-full border rounded-lg px-4 py-2 bg-white">
+            <option value="">-- ไม่ระบุ --</option>
+          </select>
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">สถานที่ติดตั้ง/เก็บ</label>
@@ -878,11 +897,34 @@
           </div>
           <button onclick="submitCreateStaff()" class="btn btn-teal btn-block mt-2">เพิ่มบัญชี</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal (admin only) — reference/lookup data (แหล่งเงิน ฯลฯ) and
+       system-wide config (Google Sign-In), kept separate from staff account
+       management above so each menu has one clear job. -->
+  <div id="settingsModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-lg my-8">
+      <div class="p-4 border-b flex justify-between items-center">
+        <h3 class="font-bold text-lg">ตั้งค่าระบบ</h3>
+        <button onclick="closeSettingsModal()" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <div class="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+        <div>
+          <h4 class="font-semibold text-sm mb-1">แหล่งเงิน</h4>
+          <p class="text-xs text-gray-500 mb-2">รายการที่แสดงในช่อง "แหล่งเงิน" ตอนเพิ่ม/แก้ไขครุภัณฑ์ — เพิ่ม/ปิดใช้งานได้เองที่นี่ ไม่ต้องแก้โค้ด</p>
+          <div id="fundingSourceList" class="space-y-2 mb-2"><!-- injected --></div>
+          <div class="flex gap-2">
+            <input type="text" id="newFundingSourceName" placeholder="เช่น เงินบริจาค" class="flex-1 border rounded-lg px-3 py-2 text-sm">
+            <button onclick="submitAddFundingSource()" class="btn btn-teal" style="padding:0 16px;">เพิ่ม</button>
+          </div>
+        </div>
         <div class="border-t pt-3">
           <h4 class="font-semibold text-sm mb-2">Google Sign-In (ไม่บังคับ)</h4>
           <p class="text-xs text-gray-500 mb-2">ต้องสร้าง OAuth Client ID จาก Google Cloud Console ก่อน แล้ววาง Client ID ไว้ที่นี่ — เว้นว่างไว้ได้ถ้ายังไม่พร้อม ระบบจะซ่อนปุ่ม Google Sign-In ไปเอง</p>
           <input type="text" id="googleClientIdInput" placeholder="Google OAuth Client ID" class="w-full border rounded-lg px-3 py-2 text-sm mb-2">
-          <button onclick="submitSaveSettings()" class="btn btn-neutral btn-block">บันทึกการตั้งค่า</button>
+          <button onclick="submitSaveSettings()" class="btn btn-neutral btn-block">บันทึกการตั้งค่า Google Sign-In</button>
         </div>
       </div>
     </div>
@@ -1064,6 +1106,7 @@
         document.getElementById('tab-add').classList.add('nav-active');
         document.getElementById('tab-dashboard').classList.add('text-gray-500');
         document.getElementById('bnav-add').classList.add('active');
+        loadFundingSources().then(() => renderFundingSourceOptions(document.getElementById('addMoney'), ''));
       }
     }
 
@@ -1199,15 +1242,18 @@
       const session = currentSession || loadCachedSession();
       const box = document.getElementById('sessionInfo');
       const adminBtn = document.getElementById('navStaffManage');
+      const settingsBtn = document.getElementById('navSettings');
       const loginBtn = document.getElementById('navLoginBtn');
       if (session) {
         box.classList.remove('hidden');
         loginBtn.classList.add('hidden');
         document.getElementById('sessionName').innerText = session.displayName + ' (' + (session.role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่') + ')';
         adminBtn.classList.toggle('hidden', session.role !== 'admin');
+        settingsBtn.classList.toggle('hidden', session.role !== 'admin');
       } else {
         box.classList.add('hidden');
         adminBtn.classList.add('hidden');
+        settingsBtn.classList.add('hidden');
         loginBtn.classList.remove('hidden');
       }
     }
@@ -1322,14 +1368,88 @@
     async function openStaffModal() {
       document.getElementById('staffModal').classList.remove('hidden');
       await refreshStaffList();
+    }
+
+    function closeStaffModal() {
+      document.getElementById('staffModal').classList.add('hidden');
+    }
+
+    // ========== SETTINGS MODAL (admin) — funding sources + Google Sign-In ==========
+    async function openSettingsModal() {
+      document.getElementById('settingsModal').classList.remove('hidden');
+      await refreshFundingSourceList();
       try {
         const settings = await callApi('getSystemSettings', {}, true);
         document.getElementById('googleClientIdInput').value = settings.googleClientId || '';
       } catch (e) { /* non-fatal — leave the field blank */ }
     }
 
-    function closeStaffModal() {
-      document.getElementById('staffModal').classList.add('hidden');
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.add('hidden');
+    }
+
+    async function refreshFundingSourceList() {
+      const container = document.getElementById('fundingSourceList');
+      try {
+        fundingSources = await callServer('getFundingSources', {});
+        container.innerHTML = fundingSources.map(f => `
+          <div class="flex items-center justify-between text-sm border rounded-lg px-3 py-2">
+            <span>${f.name}</span>
+            <button onclick="toggleFundingSourceStatus('${f.name.replace(/'/g, "\\'")}', '${f.status}')" class="text-xs px-3 py-1.5 rounded-full ${f.status === 'active' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">
+              ${f.status === 'active' ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
+            </button>
+          </div>
+        `).join('') || '<p class="text-sm text-gray-400">ยังไม่มีแหล่งเงิน</p>';
+      } catch (err) {
+        container.innerHTML = '';
+        Swal.fire('ข้อผิดพลาด', err.message, 'error');
+      }
+    }
+
+    async function submitAddFundingSource() {
+      const name = document.getElementById('newFundingSourceName').value.trim();
+      if (!name) return;
+      showLoading(true);
+      try {
+        await callServer('addFundingSource', { name });
+        showLoading(false);
+        document.getElementById('newFundingSourceName').value = '';
+        refreshFundingSourceList();
+      } catch (err) {
+        showLoading(false);
+        Swal.fire('ข้อผิดพลาด', err.message, 'error');
+      }
+    }
+
+    async function toggleFundingSourceStatus(name, currentStatus) {
+      const newStatus = currentStatus === 'active' ? 'disabled' : 'active';
+      showLoading(true);
+      try {
+        await callServer('setFundingSourceStatus', { name, status: newStatus });
+        showLoading(false);
+        refreshFundingSourceList();
+      } catch (err) {
+        showLoading(false);
+        Swal.fire('ข้อผิดพลาด', err.message, 'error');
+      }
+    }
+
+    // Loads the active funding sources and fills a <select> with them,
+    // keeping the record's current value selectable even if it was since
+    // retired/renamed (so opening an old item for edit never silently blanks
+    // its funding source).
+    let fundingSources = [];
+    async function loadFundingSources() {
+      try { fundingSources = await callServer('getFundingSources', {}); }
+      catch (e) { fundingSources = []; }
+      return fundingSources;
+    }
+
+    function renderFundingSourceOptions(selectEl, currentValue) {
+      const names = fundingSources.filter(f => f.status === 'active').map(f => f.name);
+      if (currentValue && !names.includes(currentValue)) names.unshift(currentValue);
+      selectEl.innerHTML = '<option value="">-- ไม่ระบุ --</option>' +
+        names.map(n => `<option value="${n}" ${n === currentValue ? 'selected' : ''}>${n}</option>`).join('');
     }
 
     async function refreshStaffList() {
@@ -1932,6 +2052,7 @@
           inventoryId: document.getElementById('addId').value,
           purchaseDate: document.getElementById('addDate').value,
           itemName: document.getElementById('addName').value,
+          description: document.getElementById('addDescription').value,
           category: document.getElementById('addCat').value,
           quantity: document.getElementById('addQty').value,
           unit: document.getElementById('addUnit').value,
@@ -1991,6 +2112,14 @@
       document.getElementById('v-loc').innerText = a.location || '-';
       document.getElementById('v-price').innerText = a.price ? parseFloat(a.price).toLocaleString() + ' บ.' : '-';
       document.getElementById('v-buyer').innerText = a.buyerName || '-';
+
+      const descWrap = document.getElementById('v-description-wrap');
+      if (a.description) {
+        document.getElementById('v-description').innerText = a.description;
+        descWrap.classList.remove('hidden');
+      } else {
+        descWrap.classList.add('hidden');
+      }
 
       document.getElementById('v-qr').src = a.qrcode;
 
@@ -2163,11 +2292,12 @@
       const a = currentViewAsset;
       document.getElementById('eDate').value = a.purchaseDate || '';
       document.getElementById('eName').value = a.itemName || '';
+      document.getElementById('eDescription').value = a.description || '';
       document.getElementById('eCat').value = a.category || 'others';
       document.getElementById('eQty').value = a.quantity || 1;
       document.getElementById('eUnit').value = a.unit || '';
       document.getElementById('ePrice').value = a.price || 0;
-      document.getElementById('eMoney').value = a.sourceOfMoney || '';
+      loadFundingSources().then(() => renderFundingSourceOptions(document.getElementById('eMoney'), a.sourceOfMoney || ''));
       document.getElementById('eLoc').value = a.location || '';
       document.getElementById('eBuyer').value = a.buyerName || '';
       document.getElementById('eInstaller').value = a.installer || '';
@@ -2195,6 +2325,7 @@
           rowIndex: currentViewAsset._rowIndex,
           inventoryId: currentViewAsset.inventoryId,
           itemName: document.getElementById('eName').value,
+          description: document.getElementById('eDescription').value,
           purchaseDate: document.getElementById('eDate').value,
           category: document.getElementById('eCat').value,
           quantity: document.getElementById('eQty').value,
