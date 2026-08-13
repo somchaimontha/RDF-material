@@ -248,6 +248,7 @@
         <div id="sessionInfo" class="hidden flex items-center gap-3 text-xs text-gray-500">
           <span><i class="fas fa-user-circle mr-1"></i><span id="sessionName">-</span></span>
           <button id="navStaffManage" onclick="openStaffModal()" class="hidden hover-brand hover:underline">จัดการบัญชี</button>
+          <button onclick="openProfileModal()" class="hover-brand hover:underline">แก้ไขข้อมูลส่วนตัว</button>
           <button onclick="openChangePasswordModal()" class="hover-brand hover:underline">เปลี่ยนรหัสผ่าน</button>
           <button onclick="logoutUser()" class="hover-brand hover:underline">ออกจากระบบ</button>
         </div>
@@ -759,6 +760,10 @@
       <form onsubmit="event.preventDefault(); submitLogin();">
         <div class="p-4 space-y-3">
           <div id="loginError" class="hidden text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
+          <div id="googleSignInWrap" class="hidden">
+            <div id="googleSignInBtn" class="flex justify-center"></div>
+            <div class="text-center text-xs text-gray-400 my-3">หรือเข้าด้วยชื่อผู้ใช้</div>
+          </div>
           <div>
             <label class="block text-sm font-medium mb-1">ชื่อผู้ใช้</label>
             <input type="text" id="loginUsername" required autocomplete="username" class="w-full border rounded-lg px-4 py-2">
@@ -800,6 +805,30 @@
     </div>
   </div>
 
+  <!-- Edit Own Profile Modal -->
+  <div id="profileModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-sm">
+      <div class="p-4 border-b flex justify-between items-center">
+        <h3 class="font-bold text-lg">แก้ไขข้อมูลส่วนตัว</h3>
+        <button onclick="closeProfileModal()" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <div class="p-4 space-y-3">
+        <div>
+          <label class="block text-sm font-medium mb-1">ชื่อที่แสดง</label>
+          <input type="text" id="profileDisplayName" class="w-full border rounded-lg px-4 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">อีเมล</label>
+          <input type="email" id="profileEmail" placeholder="สำหรับเข้าสู่ระบบด้วย Google (ถ้ามี)" class="w-full border rounded-lg px-4 py-2">
+        </div>
+      </div>
+      <div class="p-4 border-t flex space-x-2">
+        <button onclick="closeProfileModal()" class="btn btn-neutral flex-1">ยกเลิก</button>
+        <button onclick="submitProfile()" class="btn btn-gold flex-1">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Staff Management Modal (admin only) -->
   <div id="staffModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex justify-center items-center p-4">
     <div class="bg-white rounded-xl shadow-lg w-full max-w-lg my-8">
@@ -822,11 +851,24 @@
               <option value="staff">เจ้าหน้าที่ (staff)</option>
               <option value="admin">ผู้ดูแลระบบ (admin)</option>
             </select>
+            <input type="email" id="newStaffEmail" placeholder="อีเมล (ไม่บังคับ — สำหรับ Google Sign-In)" class="border rounded-lg px-3 py-2 text-sm col-span-2">
           </div>
           <button onclick="submitCreateStaff()" class="btn btn-teal btn-block mt-2">เพิ่มบัญชี</button>
         </div>
+        <div class="border-t pt-3">
+          <h4 class="font-semibold text-sm mb-2">Google Sign-In (ไม่บังคับ)</h4>
+          <p class="text-xs text-gray-500 mb-2">ต้องสร้าง OAuth Client ID จาก Google Cloud Console ก่อน แล้ววาง Client ID ไว้ที่นี่ — เว้นว่างไว้ได้ถ้ายังไม่พร้อม ระบบจะซ่อนปุ่ม Google Sign-In ไปเอง</p>
+          <input type="text" id="googleClientIdInput" placeholder="Google OAuth Client ID" class="w-full border rounded-lg px-3 py-2 text-sm mb-2">
+          <button onclick="submitSaveSettings()" class="btn btn-neutral btn-block">บันทึกการตั้งค่า</button>
+        </div>
       </div>
     </div>
+  </div>
+
+  <!-- Image Lightbox: full-size preview of an attached image without leaving the page -->
+  <div id="imageLightbox" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex justify-center items-center p-4" onclick="closeImageLightbox()">
+    <button onclick="closeImageLightbox()" class="absolute top-4 right-4 text-white text-3xl leading-none">&times;</button>
+    <img id="imageLightboxImg" src="" alt="รูปเต็ม" class="max-w-full max-h-full rounded-lg" onclick="event.stopPropagation()">
   </div>
 
   <!-- QR Label Settings Modal -->
@@ -946,6 +988,7 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       updateSessionUI(); // reflect a cached session (from sessionStorage) immediately
+      initGoogleSignIn(); // fire-and-forget; no-op if no Client ID has been configured yet
       if (SERVER_ACTION === "viewItem" && SERVER_ID) {
         // Hide Nav menus in View Mode
         document.getElementById('nav-menu').classList.add('hidden');
@@ -1163,6 +1206,10 @@
     async function openStaffModal() {
       document.getElementById('staffModal').classList.remove('hidden');
       await refreshStaffList();
+      try {
+        const settings = await callApi('getSystemSettings', {}, true);
+        document.getElementById('googleClientIdInput').value = settings.googleClientId || '';
+      } catch (e) { /* non-fatal — leave the field blank */ }
     }
 
     function closeStaffModal() {
@@ -1177,7 +1224,7 @@
           <div class="flex items-center justify-between text-sm border rounded-lg px-3 py-2">
             <div>
               <div class="font-semibold">${s.displayName} <span class="text-gray-400 font-normal">(${s.username})</span></div>
-              <div class="text-xs text-gray-500">${s.role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่'} · ${s.status === 'active' ? 'ใช้งานอยู่' : 'ปิดใช้งาน'}</div>
+              <div class="text-xs text-gray-500">${s.role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่'} · ${s.status === 'active' ? 'ใช้งานอยู่' : 'ปิดใช้งาน'}${s.email ? ' · ' + s.email : ''}</div>
             </div>
             <button onclick="toggleStaffStatus('${s.username}', '${s.status}')" class="text-xs px-3 py-1.5 rounded-full ${s.status === 'active' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">
               ${s.status === 'active' ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
@@ -1195,7 +1242,8 @@
         username: document.getElementById('newStaffUsername').value.trim(),
         displayName: document.getElementById('newStaffDisplayName').value.trim(),
         password: document.getElementById('newStaffPassword').value,
-        role: document.getElementById('newStaffRole').value
+        role: document.getElementById('newStaffRole').value,
+        email: document.getElementById('newStaffEmail').value.trim()
       };
       if (!payload.username || !payload.displayName || !payload.password) {
         Swal.fire('กรอกข้อมูลไม่ครบ', 'กรุณากรอกชื่อผู้ใช้ ชื่อที่แสดง และรหัสผ่าน', 'warning');
@@ -1205,13 +1253,109 @@
       try {
         await callServer('createStaffAccount', payload);
         showLoading(false);
-        ['newStaffUsername', 'newStaffDisplayName', 'newStaffPassword'].forEach(id => document.getElementById(id).value = '');
+        ['newStaffUsername', 'newStaffDisplayName', 'newStaffPassword', 'newStaffEmail'].forEach(id => document.getElementById(id).value = '');
         Swal.fire('สำเร็จ', 'เพิ่มบัญชีเรียบร้อย', 'success');
         refreshStaffList();
       } catch (err) {
         showLoading(false);
         Swal.fire('ข้อผิดพลาด', err.message, 'error');
       }
+    }
+
+    async function submitSaveSettings() {
+      const googleClientId = document.getElementById('googleClientIdInput').value.trim();
+      showLoading(true);
+      try {
+        await callServer('saveSystemSettings', { googleClientId });
+        showLoading(false);
+        Swal.fire('สำเร็จ', 'บันทึกแล้ว รีเฟรชหน้าเว็บเพื่อให้ปุ่ม Google Sign-In อัปเดต', 'success');
+      } catch (err) {
+        showLoading(false);
+        Swal.fire('ข้อผิดพลาด', err.message, 'error');
+      }
+    }
+
+    // ========== EDIT OWN PROFILE ==========
+    async function openProfileModal() {
+      document.getElementById('profileModal').classList.remove('hidden');
+      try {
+        const profile = await callServer('getOwnProfile', {});
+        document.getElementById('profileDisplayName').value = profile.displayName || '';
+        document.getElementById('profileEmail').value = profile.email || '';
+      } catch (err) {
+        Swal.fire('ข้อผิดพลาด', err.message, 'error');
+      }
+    }
+
+    function closeProfileModal() {
+      document.getElementById('profileModal').classList.add('hidden');
+    }
+
+    async function submitProfile() {
+      const payload = {
+        displayName: document.getElementById('profileDisplayName').value.trim(),
+        email: document.getElementById('profileEmail').value.trim()
+      };
+      if (!payload.displayName) { Swal.fire('กรอกข้อมูลไม่ครบ', 'กรุณากรอกชื่อที่แสดง', 'warning'); return; }
+      showLoading(true);
+      try {
+        const session = await callServer('updateOwnProfile', payload);
+        showLoading(false);
+        saveSession(session); // refresh cached displayName shown in the navbar
+        closeProfileModal();
+        Swal.fire('สำเร็จ', 'บันทึกข้อมูลส่วนตัวเรียบร้อย', 'success');
+      } catch (err) {
+        showLoading(false);
+        Swal.fire('ข้อผิดพลาด', err.message, 'error');
+      }
+    }
+
+    // ========== GOOGLE SIGN-IN ==========
+    // Only shown once an admin has saved a Client ID (จัดการบัญชี -> Google
+    // Sign-In section) — until then this silently does nothing, no extra
+    // network request for the GIS script either.
+    async function initGoogleSignIn() {
+      try {
+        const settings = await callApi('getSystemSettings', {}, true);
+        if (!settings.googleClientId) return;
+        window.GOOGLE_CLIENT_ID = settings.googleClientId;
+        const script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.onload = () => {
+          google.accounts.id.initialize({ client_id: window.GOOGLE_CLIENT_ID, callback: handleGoogleCredential });
+          google.accounts.id.renderButton(document.getElementById('googleSignInBtn'), { theme: 'outline', size: 'large', width: 280 });
+          document.getElementById('googleSignInWrap').classList.remove('hidden');
+        };
+        document.head.appendChild(script);
+      } catch (e) { /* settings unreachable -> just skip Google sign-in silently */ }
+    }
+
+    async function handleGoogleCredential(response) {
+      showLoading(true);
+      try {
+        const session = await callApi('loginWithGoogle', { idToken: response.credential }, false);
+        showLoading(false);
+        saveSession(session);
+        document.getElementById('loginModal').classList.add('hidden');
+        if (_loginResolve) _loginResolve(session);
+        _loginResolve = null; _loginReject = null;
+      } catch (err) {
+        showLoading(false);
+        showLoginError(err.message);
+      }
+    }
+
+    // ========== IMAGE LIGHTBOX ==========
+    // Attached photos/receipts open as an in-page popup instead of a new
+    // tab — one tap to view, one tap (or tap the backdrop) to dismiss.
+    function openImageLightbox(url) {
+      document.getElementById('imageLightboxImg').src = url;
+      document.getElementById('imageLightbox').classList.remove('hidden');
+    }
+
+    function closeImageLightbox() {
+      document.getElementById('imageLightbox').classList.add('hidden');
+      document.getElementById('imageLightboxImg').src = '';
     }
 
     async function toggleStaffStatus(username, currentStatus) {
@@ -1655,12 +1799,14 @@
         borrowInfo.classList.add('hidden');
       }
 
-      // Images
+      // Images (image, image2, receipt, receipt2, receipt3, receipt4) — only
+      // the ones actually uploaded show up; tapping one opens it as an
+      // in-page popup (openImageLightbox) instead of a new tab/page.
       const imgContainer = document.getElementById('v-images');
       let imgHtml = '';
       [a.image, a.image2, a.receipt, a.receipt2, a.receipt3, a.receipt4].forEach((url, i) => {
         if (url && url.trim() !== '') {
-          imgHtml += `<a href="${url}" target="_blank"><img src="${url}" class="w-full h-32 object-cover rounded border hover:opacity-80"></a>`;
+          imgHtml += `<img src="${url}" onclick="openImageLightbox('${url}')" class="w-full h-32 object-cover rounded border hover:opacity-80 cursor-pointer">`;
         }
       });
       imgContainer.innerHTML = imgHtml;
