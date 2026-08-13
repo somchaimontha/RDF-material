@@ -252,6 +252,9 @@
           <button onclick="openChangePasswordModal()" class="hover-brand hover:underline">เปลี่ยนรหัสผ่าน</button>
           <button onclick="logoutUser()" class="hover-brand hover:underline">ออกจากระบบ</button>
         </div>
+        <button id="navLoginBtn" onclick="promptLogin()" class="btn btn-teal text-xs px-3 py-1.5">
+          <i class="fas fa-right-to-bracket mr-1"></i>เข้าสู่ระบบ
+        </button>
       </div>
       <div class="flex space-x-4 overflow-x-auto pb-1" id="nav-menu">
         <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-active px-3 py-2 text-sm whitespace-nowrap"><i class="fas fa-list mr-1"></i> รายการครุภัณฑ์</button>
@@ -1161,14 +1164,24 @@
       const session = currentSession || loadCachedSession();
       const box = document.getElementById('sessionInfo');
       const adminBtn = document.getElementById('navStaffManage');
+      const loginBtn = document.getElementById('navLoginBtn');
       if (session) {
         box.classList.remove('hidden');
+        loginBtn.classList.add('hidden');
         document.getElementById('sessionName').innerText = session.displayName + ' (' + (session.role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่') + ')';
         adminBtn.classList.toggle('hidden', session.role !== 'admin');
       } else {
         box.classList.add('hidden');
         adminBtn.classList.add('hidden');
+        loginBtn.classList.remove('hidden');
       }
+    }
+
+    // Lets a user proactively open the login modal from the navbar, instead
+    // of only being prompted the moment they try to edit something. Swallows
+    // the "cancelled" rejection since there's no pending action to resume here.
+    function promptLogin() {
+      openLoginModal().catch(() => {});
     }
 
     function getSession() {
@@ -1384,10 +1397,10 @@
         if (!settings.googleClientId) return;
         window.GOOGLE_CLIENT_ID = settings.googleClientId;
         const script = document.createElement('script');
-        script.src = 'https://accounts.google.com/gsi/client';
+        script.src = 'https://accounts.google.com/gsi/client?hl=th'; // hl=th -> Google renders the button/prompt text in Thai
         script.onload = () => {
           google.accounts.id.initialize({ client_id: window.GOOGLE_CLIENT_ID, callback: handleGoogleCredential });
-          google.accounts.id.renderButton(document.getElementById('googleSignInBtn'), { theme: 'outline', size: 'large', width: 280 });
+          google.accounts.id.renderButton(document.getElementById('googleSignInBtn'), { theme: 'outline', size: 'large', width: 280, text: 'signin_with', locale: 'th' });
           document.getElementById('googleSignInWrap').classList.remove('hidden');
         };
         document.head.appendChild(script);
