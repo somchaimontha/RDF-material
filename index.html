@@ -258,6 +258,7 @@
           <span><i class="fas fa-user-circle mr-1"></i><span id="sessionName">-</span></span>
           <button id="navStaffManage" onclick="openStaffModal()" class="hidden hover-brand hover:underline">จัดการบัญชี</button>
           <button id="navSettings" onclick="openSettingsModal()" class="hidden hover-brand hover:underline">ตั้งค่า</button>
+          <button id="navReports" onclick="openReportsModal()" class="hidden hover-brand hover:underline">รายงาน</button>
           <button onclick="openProfileModal()" class="hover-brand hover:underline">แก้ไขข้อมูลส่วนตัว</button>
           <button onclick="openChangePasswordModal()" class="hover-brand hover:underline">เปลี่ยนรหัสผ่าน</button>
           <button onclick="logoutUser()" class="hover-brand hover:underline">ออกจากระบบ</button>
@@ -942,6 +943,60 @@
           <input type="text" id="googleClientIdInput" placeholder="Google OAuth Client ID" class="w-full border rounded-lg px-3 py-2 text-sm mb-2">
           <button onclick="submitSaveSettings()" class="btn btn-neutral btn-block">บันทึกการตั้งค่า Google Sign-In</button>
         </div>
+        <div class="border-t pt-3">
+          <h4 class="font-semibold text-sm mb-2">แจ้งเตือนของเกินกำหนดคืน</h4>
+          <p class="text-xs text-gray-500 mb-2">ส่งอีเมลสรุปรายการเกินกำหนดคืนให้ admin ทุกคนที่ผูกอีเมลไว้ — กดปุ่มนี้เพื่อส่งทันที หรือให้ทำงานอัตโนมัติทุกวัน ตั้งค่า 1 ครั้งที่ Apps Script editor → ไอคอนนาฬิกา (Triggers) → Add Trigger → เลือกฟังก์ชัน <code>checkOverdueAndNotify</code> → Time-driven → Day timer</p>
+          <button onclick="sendOverdueNotifyNow()" class="btn btn-gold btn-block">ส่งแจ้งเตือนตอนนี้</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reports Modal (admin) — audit trail across every item + client/server error log -->
+  <div id="reportsModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl my-8">
+      <div class="p-4 border-b flex justify-between items-center">
+        <h3 class="font-bold text-lg">รายงาน</h3>
+        <button onclick="closeReportsModal()" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <div class="px-4 pt-3 flex gap-4 border-b text-sm">
+        <button id="reportsTabHistoryBtn" onclick="switchReportsTab('history')" class="pb-2 border-b-2 font-medium">ประวัติการดำเนินการ</button>
+        <button id="reportsTabErrorBtn" onclick="switchReportsTab('error')" class="pb-2 border-b-2 border-transparent text-gray-400 font-medium">บันทึกข้อผิดพลาด</button>
+      </div>
+      <div class="p-4 max-h-[65vh] overflow-y-auto">
+        <div id="reportsHistoryPane">
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs border-collapse">
+              <thead>
+                <tr class="text-left text-gray-500 border-b">
+                  <th class="py-1.5 pr-2 font-medium">เวลา</th>
+                  <th class="py-1.5 pr-2 font-medium">รหัส</th>
+                  <th class="py-1.5 pr-2 font-medium">รายการ</th>
+                  <th class="py-1.5 pr-2 font-medium">การดำเนินการ</th>
+                  <th class="py-1.5 pr-2 font-medium">โดย</th>
+                  <th class="py-1.5 pr-2 font-medium">หมายเหตุ</th>
+                </tr>
+              </thead>
+              <tbody id="reportsHistoryBody"><!-- injected --></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="reportsErrorPane" class="hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs border-collapse">
+              <thead>
+                <tr class="text-left text-gray-500 border-b">
+                  <th class="py-1.5 pr-2 font-medium">เวลา</th>
+                  <th class="py-1.5 pr-2 font-medium">แหล่งที่มา</th>
+                  <th class="py-1.5 pr-2 font-medium">บริบท</th>
+                  <th class="py-1.5 pr-2 font-medium">ข้อความ</th>
+                  <th class="py-1.5 pr-2 font-medium">ผู้ใช้</th>
+                </tr>
+              </thead>
+              <tbody id="reportsErrorBody"><!-- injected --></tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1321,6 +1376,7 @@
       const box = document.getElementById('sessionInfo');
       const adminBtn = document.getElementById('navStaffManage');
       const settingsBtn = document.getElementById('navSettings');
+      const reportsBtn = document.getElementById('navReports');
       const loginBtn = document.getElementById('navLoginBtn');
       if (session) {
         box.classList.remove('hidden');
@@ -1328,10 +1384,12 @@
         document.getElementById('sessionName').innerText = session.displayName + ' (' + (session.role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่') + ')';
         adminBtn.classList.toggle('hidden', session.role !== 'admin');
         settingsBtn.classList.toggle('hidden', session.role !== 'admin');
+        reportsBtn.classList.toggle('hidden', session.role !== 'admin');
       } else {
         box.classList.add('hidden');
         adminBtn.classList.add('hidden');
         settingsBtn.classList.add('hidden');
+        reportsBtn.classList.add('hidden');
         loginBtn.classList.remove('hidden');
       }
     }
@@ -1509,6 +1567,81 @@
       } catch (err) {
         showLoading(false);
         Swal.fire('ข้อผิดพลาด', err.message, 'error');
+      }
+    }
+
+    async function sendOverdueNotifyNow() {
+      showLoading(true);
+      try {
+        const res = await callServer('checkOverdueAndNotify', {});
+        showLoading(false);
+        Swal.fire(res.count > 0 ? 'สำเร็จ' : 'ไม่มีรายการ', res.message, 'success');
+      } catch (err) {
+        showLoading(false);
+        Swal.fire('ข้อผิดพลาด', err.message, 'error');
+      }
+    }
+
+    // ========== REPORTS MODAL (admin) — audit trail + error log ==========
+    async function openReportsModal() {
+      document.getElementById('reportsModal').classList.remove('hidden');
+      switchReportsTab('history');
+    }
+
+    function closeReportsModal() {
+      document.getElementById('reportsModal').classList.add('hidden');
+    }
+
+    function switchReportsTab(tab) {
+      const historyBtn = document.getElementById('reportsTabHistoryBtn');
+      const errorBtn = document.getElementById('reportsTabErrorBtn');
+      const historyPane = document.getElementById('reportsHistoryPane');
+      const errorPane = document.getElementById('reportsErrorPane');
+      const activeStyle = { borderColor: 'var(--teal)', color: 'var(--teal-dark)' };
+      const inactiveStyle = { borderColor: 'transparent', color: '#9ca3af' };
+      Object.assign(historyBtn.style, tab === 'history' ? activeStyle : inactiveStyle);
+      Object.assign(errorBtn.style, tab === 'error' ? activeStyle : inactiveStyle);
+      historyPane.classList.toggle('hidden', tab !== 'history');
+      errorPane.classList.toggle('hidden', tab !== 'error');
+      if (tab === 'history') refreshHistoryReport(); else refreshErrorLogReport();
+    }
+
+    async function refreshHistoryReport() {
+      const body = document.getElementById('reportsHistoryBody');
+      body.innerHTML = '<tr><td colspan="6" class="text-center text-gray-400 py-4">กำลังโหลด...</td></tr>';
+      try {
+        const rows = await callServer('getFullHistory', {});
+        body.innerHTML = rows.map(r => `
+          <tr class="border-b">
+            <td class="py-1.5 pr-2 whitespace-nowrap text-gray-500">${r.timestamp || ''}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap font-semibold" style="color:var(--teal-dark)">${r.inventoryId || ''}</td>
+            <td class="py-1.5 pr-2 max-w-[160px] truncate" title="${r.itemName || ''}">${r.itemName || ''}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap">${r.actionType || ''}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap">${r.actionBy || ''}</td>
+            <td class="py-1.5 pr-2 max-w-[180px] truncate" title="${r.actionNote || ''}">${r.actionNote || ''}</td>
+          </tr>
+        `).join('') || '<tr><td colspan="6" class="text-center text-gray-400 py-4">ยังไม่มีประวัติ</td></tr>';
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 py-4">${err.message}</td></tr>`;
+      }
+    }
+
+    async function refreshErrorLogReport() {
+      const body = document.getElementById('reportsErrorBody');
+      body.innerHTML = '<tr><td colspan="5" class="text-center text-gray-400 py-4">กำลังโหลด...</td></tr>';
+      try {
+        const rows = await callServer('getErrorLog', {});
+        body.innerHTML = rows.map(r => `
+          <tr class="border-b">
+            <td class="py-1.5 pr-2 whitespace-nowrap text-gray-500">${r.timestamp || ''}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap">${r.source || ''}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap">${r.context || ''}</td>
+            <td class="py-1.5 pr-2 max-w-[220px] truncate" title="${r.message || ''}">${r.message || ''}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap">${r.username || '-'}</td>
+          </tr>
+        `).join('') || '<tr><td colspan="5" class="text-center text-gray-400 py-4">ยังไม่มีบันทึกข้อผิดพลาด</td></tr>';
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="5" class="text-center text-red-500 py-4">${err.message}</td></tr>`;
       }
     }
 
