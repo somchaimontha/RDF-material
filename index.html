@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบจัดการครุภัณฑ์ RDF</title>
+  <link rel="icon" type="image/png" href="logo.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -242,7 +243,7 @@
     <div class="max-w-5xl mx-auto px-4">
       <div class="flex justify-between items-center h-16">
         <div class="flex items-center space-x-2 cursor-pointer" onclick="goHome()">
-          <i class="fas fa-boxes text-brand text-2xl"></i>
+          <img src="logo.png" alt="RDF" class="h-9 w-9 rounded-full object-contain">
           <span class="font-extrabold text-xl text-gray-800">RDF Asset</span>
         </div>
         <div id="sessionInfo" class="hidden flex items-center gap-3 text-xs text-gray-500">
@@ -1460,6 +1461,14 @@
     }
 
     async function handleGoogleCredential(response) {
+      // Google's own callback sometimes fires with no credential at all (most
+      // often: third-party cookies blocked, or FedCM disabled in the
+      // browser) — catch that here with a clearer message instead of sending
+      // an empty idToken to the server and getting a more generic error back.
+      if (!response || !response.credential) {
+        showLoginError('ไม่ได้รับข้อมูลยืนยันตัวตนจาก Google กรุณาเปิดใช้คุกกี้บุคคลที่สาม (third-party cookies) ของเบราว์เซอร์ หรือลองใหม่ในเบราว์เซอร์อื่น');
+        return;
+      }
       showLoading(true);
       try {
         const session = await callApi('loginWithGoogle', { idToken: response.credential }, false);
