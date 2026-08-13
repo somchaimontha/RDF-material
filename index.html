@@ -399,6 +399,10 @@
             <button id="viewModeCardBtn" onclick="setAssetViewMode('card')" class="px-3 py-1.5" title="มุมมองการ์ด"><i class="fas fa-grip"></i></button>
             <button id="viewModeTableBtn" onclick="setAssetViewMode('table')" class="px-3 py-1.5 border-l" title="มุมมองตาราง"><i class="fas fa-table-list"></i></button>
           </div>
+          <div class="flex rounded-lg border overflow-hidden text-xs">
+            <button onclick="exportAssetsCsv()" class="px-3 py-1.5 text-gray-500 hover-brand" title="ส่งออกรายการที่กรองอยู่เป็น CSV (เปิดด้วย Excel ได้)"><i class="fas fa-file-csv"></i> CSV</button>
+            <button onclick="printAssetsReport()" class="px-3 py-1.5 border-l text-gray-500 hover-brand" title="พิมพ์รายงาน / บันทึกเป็น PDF"><i class="fas fa-file-pdf"></i> PDF</button>
+          </div>
         </div>
       </div>
 
@@ -2019,8 +2023,10 @@
         return matchSearch && matchStatus && matchCat;
       });
       document.getElementById('resultCount').innerText = `แสดง ${filtered.length} จาก ${allAssets.length} รายการ`;
+      lastFilteredAssets = filtered; // so export (CSV/PDF) exports exactly what's on screen
       renderAssets(filtered);
     }
+    let lastFilteredAssets = [];
 
     // Stat tiles + category bars are clickable shortcuts into the same
     // search/filter bar below, so "check the data" is one click away.
@@ -2173,6 +2179,79 @@
           </table>
         </div>
       `;
+    }
+
+    // ========== EXPORT (CSV / PDF) — exports whatever the current filters
+    // show (lastFilteredAssets, set by filterAssets), entirely client-side ==========
+    function csvEscape(val) {
+      const s = String(val === null || val === undefined ? '' : val);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }
+
+    function exportAssetsCsv() {
+      const rows = lastFilteredAssets;
+      if (!rows.length) { Swal.fire('ไม่มีข้อมูล', 'ไม่มีรายการที่จะส่งออกในตัวกรองปัจจุบัน', 'info'); return; }
+      const headers = ['รหัส', 'ชื่อรายการ', 'หมวดหมู่', 'สถานะ', 'จำนวน', 'หน่วย', 'ราคา', 'แหล่งเงิน', 'สถานที่', 'ผู้จัดซื้อ', 'วันที่จัดซื้อ', 'คำอธิบาย/รายละเอียด', 'หมายเหตุ'];
+      const lines = [headers.map(csvEscape).join(',')];
+      rows.forEach(a => {
+        lines.push([
+          a.inventoryId, a.itemName, CATEGORY_LABELS[a.category] || a.category, a.status,
+          a.quantity, a.unit, a.price, a.sourceOfMoney, a.location, a.buyerName, a.purchaseDate,
+          a.description, a.note
+        ].map(csvEscape).join(','));
+      });
+      // Leading ﻿ (BOM) so Excel opens the file as UTF-8 instead of
+      // guessing the system codepage and mangling Thai text.
+      const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ครุภัณฑ์_' + new Date().toISOString().slice(0, 10) + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    // Reuses the same window.print() + #printArea mechanism already built for
+    // QR labels — "Save as PDF" in the print dialog is the export path.
+    function printAssetsReport() {
+      const rows = lastFilteredAssets;
+      if (!rows.length) { Swal.fire('ไม่มีข้อมูล', 'ไม่มีรายการที่จะพิมพ์ในตัวกรองปัจจุบัน', 'info'); return; }
+      const totalValue = rows.reduce((sum, a) => sum + (parseFloat(a.price) || 0) * (parseFloat(a.quantity) || 1), 0);
+      const cell = 'border:1px solid #ccc; padding:4px 6px;';
+      const rowsHtml = rows.map((a, i) => `
+        <tr>
+          <td style="${cell}">${i + 1}</td>
+          <td style="${cell}">${a.inventoryId || ''}</td>
+          <td style="${cell}">${a.itemName || ''}</td>
+          <td style="${cell}">${CATEGORY_LABELS[a.category] || a.category || ''}</td>
+          <td style="${cell}">${a.status || ''}</td>
+          <td style="${cell}">${a.location || '-'}</td>
+          <td style="${cell} text-align:right">${a.price ? parseFloat(a.price).toLocaleString() : '0'}</td>
+        </tr>
+      `).join('');
+      document.getElementById('printArea').innerHTML = `
+        <div style="font-family: sans-serif; padding: 16px;">
+          <h2 style="margin:0 0 4px;">รายงานครุภัณฑ์ — RDF Asset</h2>
+          <p style="margin:0 0 12px; color:#555; font-size:13px;">พิมพ์เมื่อ ${formatThaiDate(new Date().toISOString().slice(0, 10))} | ทั้งหมด ${rows.length} รายการ | มูลค่ารวม ${totalValue.toLocaleString()} บาท</p>
+          <table style="width:100%; border-collapse:collapse; font-size:12px;">
+            <thead>
+              <tr style="background:#f0f0f0;">
+                <th style="${cell}">#</th>
+                <th style="${cell}">รหัส</th>
+                <th style="${cell}">ชื่อรายการ</th>
+                <th style="${cell}">หมวดหมู่</th>
+                <th style="${cell}">สถานะ</th>
+                <th style="${cell}">สถานที่</th>
+                <th style="${cell}">ราคา (บ.)</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+      `;
+      window.print();
     }
 
     // ========== QR LABEL PRINTING ==========
