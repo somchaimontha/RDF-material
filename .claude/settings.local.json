@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(iconv -f UTF-8 -t UTF-8 \"/d/RDF/material RDF System/code.gs\")",
+      "Bash(iconv -f UTF-8 -t UTF-8 \"/d/RDF/material RDF System/index.html\")"
+    ]
+  }
+}

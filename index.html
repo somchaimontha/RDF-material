@@ -259,6 +259,7 @@
           <button id="navStaffManage" onclick="openStaffModal()" class="hidden hover-brand hover:underline">จัดการบัญชี</button>
           <button id="navSettings" onclick="openSettingsModal()" class="hidden hover-brand hover:underline">ตั้งค่า</button>
           <button id="navReports" onclick="openReportsModal()" class="hidden hover-brand hover:underline">รายงาน</button>
+          <button id="navReportDoc" onclick="openReportDocModal()" class="hidden hover-brand hover:underline">รายงานเอกสาร</button>
           <button onclick="openProfileModal()" class="hover-brand hover:underline">แก้ไขข้อมูลส่วนตัว</button>
           <button onclick="openChangePasswordModal()" class="hover-brand hover:underline">เปลี่ยนรหัสผ่าน</button>
           <button onclick="logoutUser()" class="hover-brand hover:underline">ออกจากระบบ</button>
@@ -425,7 +426,10 @@
     <!-- ==================== ADD ASSET VIEW ==================== -->
     <div id="view-add" class="hidden">
       <div class="bg-white p-6 rounded-xl shadow-sm">
-        <h2 class="section-title text-xl">🆕 เพิ่มครุภัณฑ์ใหม่</h2>
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <h2 class="section-title text-xl">🆕 เพิ่มครุภัณฑ์ใหม่</h2>
+          <button onclick="openBulkImportModal()" class="btn btn-neutral" title="นำเข้าหลายรายการพร้อมกัน"><i class="fas fa-file-import mr-1"></i> นำเข้าข้อมูลชุดใหญ่</button>
+        </div>
         <form id="addForm" onsubmit="submitAddForm(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           <div class="col-span-full md:col-span-1">
@@ -857,8 +861,9 @@
           <input type="password" id="oldPassword" class="w-full border rounded-lg px-4 py-2">
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1">รหัสผ่านใหม่ (อย่างน้อย 8 ตัว มีทั้งตัวอักษรและตัวเลข)</label>
+          <label class="block text-sm font-medium mb-1">รหัสผ่านใหม่ (อย่างน้อย 10 ตัว, มีพิมพ์เล็ก/พิมพ์ใหญ่/ตัวเลข/อักขระพิเศษ)</label>
           <input type="password" id="newPassword" class="w-full border rounded-lg px-4 py-2">
+          <p class="text-xs text-gray-400">เช่น Abcdef1234! — อย่างน้อย 10 ตัว เหมือนกันทั้งระบบ</p>
         </div>
       </div>
       <div class="p-4 border-t flex space-x-2">
@@ -909,7 +914,7 @@
           <div class="grid grid-cols-2 gap-2">
             <input type="text" id="newStaffUsername" placeholder="ชื่อผู้ใช้" class="border rounded-lg px-3 py-2 text-sm">
             <input type="text" id="newStaffDisplayName" placeholder="ชื่อที่แสดง" class="border rounded-lg px-3 py-2 text-sm">
-            <input type="password" id="newStaffPassword" placeholder="รหัสผ่าน (อย่างน้อย 8 ตัว)" class="border rounded-lg px-3 py-2 text-sm">
+            <input type="password" id="newStaffPassword" placeholder="รหัสผ่าน (≥10 ตัว, พิมพ์เล็ก/ใหญ่/ตัวเลข/สัญลักษณ์)" class="border rounded-lg px-3 py-2 text-sm">
             <select id="newStaffRole" class="border rounded-lg px-3 py-2 text-sm bg-white">
               <option value="staff">เจ้าหน้าที่ (staff)</option>
               <option value="admin">ผู้ดูแลระบบ (admin)</option>
@@ -966,6 +971,7 @@
       <div class="px-4 pt-3 flex gap-4 border-b text-sm">
         <button id="reportsTabHistoryBtn" onclick="switchReportsTab('history')" class="pb-2 border-b-2 font-medium">ประวัติการดำเนินการ</button>
         <button id="reportsTabErrorBtn" onclick="switchReportsTab('error')" class="pb-2 border-b-2 border-transparent text-gray-400 font-medium">บันทึกข้อผิดพลาด</button>
+        <button id="reportsTabLoginBtn" onclick="switchReportsTab('login')" class="pb-2 border-b-2 border-transparent text-gray-400 font-medium">เข้าสู่ระบบ</button>
       </div>
       <div class="p-4 max-h-[65vh] overflow-y-auto">
         <div id="reportsHistoryPane">
@@ -1000,6 +1006,135 @@
               <tbody id="reportsErrorBody"><!-- injected --></tbody>
             </table>
           </div>
+        </div>
+        <div id="reportsLoginPane" class="hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs border-collapse">
+              <thead>
+                <tr class="text-left text-gray-500 border-b">
+                  <th class="py-1.5 pr-2 font-medium">เวลา</th>
+                  <th class="py-1.5 pr-2 font-medium">ผู้ใช้</th>
+                  <th class="py-1.5 pr-2 font-medium">ชื่อ</th>
+                  <th class="py-1.5 pr-2 font-medium">สิทธิ์</th>
+                  <th class="py-1.5 pr-2 font-medium">ผลลัพธ์</th>
+                  <th class="py-1.5 pr-2 font-medium">รายละเอียด</th>
+                </tr>
+              </thead>
+              <tbody id="reportsLoginBody"><!-- injected --></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Import Modal — import many assets at once (staff/admin). Parses the
+       pasted text (tab / ; / , separated) client-side, then calls addBulkAssets
+       once with all rows. IDs are auto-generated server-side per row. -->
+  <div id="bulkImportModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex justify-center items-start p-4 overflow-y-auto">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl my-6">
+      <div class="p-4 border-b flex justify-between items-center">
+        <h3 class="font-bold text-lg">📥 นำเข้าข้อมูลชุดใหญ่</h3>
+        <button onclick="closeBulkImportModal()" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <div class="p-4 space-y-3">
+        <p class="text-xs text-gray-600">วางข้อมูลทีละแถว (แยกด้วย <b>Tab</b>, <b>; </b>หรือ <b>,</b>) ในลำดับคอลัมน์:</p>
+        <div class="text-xs bg-gray-50 border rounded-lg p-2 leading-relaxed text-gray-700">
+          <code>ชื่อรายการ, หมวดหมู่, จำนวน, ราคา, แหล่งเงิน, สถานที่, วันที่ซื้อ(YYYY-MM-DD), ผู้ซื้อ, ผู้ติดตั้ง, หมายเหตุ</code>
+          <br><span class="text-gray-400">หมวดหมู่กรอกเป็นรหัส (electrical/furniture/it/cleaning/sports/kitchen/others) หรือชื่อไทยก็ได้ · รหัสครุภัณฑ์/QR สร้างอัตโนมัติ · รายการที่เว้นชื่อไว้จะถูกข้าม</span>
+        </div>
+        <textarea id="bulkInput" oninput="updateBulkCount()" rows="10" placeholder="แอร์ Mitsubishi 12000 BTU, electrical, 2, 18000, เงินบริจาค, หอหญิง, 2026-01-15, นายสมชาย&#10;โต๊ะนักเรียน 1 ที่นั่ง, furniture, 10, 850, เงินบริจาค, ห้อง 102, 2026-02-01" class="w-full border rounded-lg px-3 py-2 text-sm font-mono"></textarea>
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <button onclick="fillBulkExample()" class="text-xs hover-brand hover:underline" style="color:var(--teal-dark)">แทรกตัวอย่าง</button>
+          <span id="bulkCount" class="text-xs text-gray-500">0 รายการที่อ่านได้</span>
+        </div>
+        <div id="bulkErrors" class="space-y-0.5"></div>
+      </div>
+      <div class="p-4 border-t flex justify-end gap-2">
+        <button onclick="closeBulkImportModal()" class="btn btn-neutral">ยกเลิก</button>
+        <button onclick="submitBulkImport()" class="btn btn-gold"><i class="fas fa-file-import mr-1"></i> นำเข้าข้อมูล</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Document Modal (admin) — generate a formal A4 "รายงานเอกสาร"
+       document: summary grouped by category / status / funding source, a
+       detailed inventory table, and a signature block. Exportable as PDF
+       (via the shared #printArea + window.print path), CSV, or Excel. Modeled
+       on rdf-billing-app's Export Report (A4) + RDF_001 reports. -->
+  <div id="reportDocModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex justify-center items-start p-4 overflow-y-auto">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-5xl my-6">
+      <div class="p-4 border-b flex justify-between items-center">
+        <h3 class="font-bold text-lg">📄 รายงานเอกสาร</h3>
+        <button onclick="closeReportDocModal()" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2">
+        <!-- LEFT: document settings -->
+        <div class="p-4 border-b lg:border-b-0 lg:border-r max-h-[70vh] overflow-y-auto space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-semibold mb-1">ชื่อหน่วยงาน</label>
+              <input type="text" id="rdOrgName" class="w-full border rounded-lg px-3 py-2 text-sm" value="มูลนิธิ RDF">
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-semibold mb-1">หัวข้อเอกสาร</label>
+              <input type="text" id="rdTitle" class="w-full border rounded-lg px-3 py-2 text-sm" value="รายงานสรุปครุภัณฑ์">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1">เลขที่เอกสาร</label>
+              <input type="text" id="rdDocNo" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="เช่น RDF-001/2569">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1">วันที่เอกสาร</label>
+              <input type="text" id="rdDocDate" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="เว้น = วันที่ปัจจุบัน">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1">ช่วงวันที่ (จาก)</label>
+              <input type="date" id="rdDateFrom" class="w-full border rounded-lg px-3 py-2 text-sm" onchange="renderReportDocPreview()">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1">ช่วงวันที่ (ถึง)</label>
+              <input type="date" id="rdDateTo" class="w-full border rounded-lg px-3 py-2 text-sm" onchange="renderReportDocPreview()">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold mb-1">สรุปตาม</label>
+            <div class="flex flex-wrap gap-3 text-sm">
+              <label class="flex items-center gap-1.5"><input type="radio" name="rdGroup" value="category" checked onchange="renderReportDocPreview()"> หมวดหมู่</label>
+              <label class="flex items-center gap-1.5"><input type="radio" name="rdGroup" value="status" onchange="renderReportDocPreview()"> สถานะ</label>
+              <label class="flex items-center gap-1.5"><input type="radio" name="rdGroup" value="fund" onchange="renderReportDocPreview()"> แหล่งเงิน</label>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-2 text-sm border rounded-lg p-3">
+            <label class="flex items-center gap-2"><input type="checkbox" id="rdChkSummary" checked onchange="renderReportDocPreview()"> แสดงตารางสรุป</label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="rdChkDetails" checked onchange="renderReportDocPreview()"> แสดงรายการละเอียด</label>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold mb-1">การลงชื่อ</label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <input type="text" id="rdSignPreparer" class="border rounded-lg px-3 py-2 text-sm" placeholder="ผู้จัดทำ/ผู้รับผิดชอบ" oninput="renderReportDocPreview()">
+              <input type="text" id="rdSignReviewer" class="border rounded-lg px-3 py-2 text-sm" placeholder="ผู้ตรวจสอบ" oninput="renderReportDocPreview()">
+              <input type="text" id="rdSignApprover" class="border rounded-lg px-3 py-2 text-sm" placeholder="ผู้อนุมัติ" oninput="renderReportDocPreview()">
+            </div>
+          </div>
+
+          <div class="text-xs text-gray-500">ข้อมูลอิงจากรายการครุภัณฑ์ทั้งหมด (ช่วงวันที่กรองจาก "วันที่ซื้อ") — สร้าง/ส่งออกผลลัพธ์ฝั่งเว็บ ไม่มีการเรียก API เพิ่มเติม</div>
+        </div>
+
+        <!-- RIGHT: live A4 preview -->
+        <div class="p-4 max-h-[70vh] overflow-y-auto bg-gray-50">
+          <div id="rdPreview" class="mx-auto bg-white shadow-lg" style="max-width:800px;"><!-- injected --></div>
+        </div>
+      </div>
+      <div class="p-4 border-t flex flex-wrap gap-3 items-center justify-between">
+        <span class="text-xs text-gray-500">ปุ่ม PDF ใช้ "บันทึกเป็น PDF" ในหน้าต่างพิมพ์เพื่อส่งออกไฟล์</span>
+        <div class="flex gap-2">
+          <button onclick="exportReportDocCsv()" class="btn btn-neutral"><i class="fas fa-file-csv mr-1"></i> CSV</button>
+          <button onclick="exportReportDocExcel()" class="btn btn-neutral"><i class="fas fa-file-excel mr-1"></i> Excel</button>
+          <button onclick="printReportDoc()" class="btn btn-gold"><i class="fas fa-print mr-1"></i> PDF / พิมพ์</button>
         </div>
       </div>
     </div>
@@ -1394,6 +1529,7 @@
       const adminBtn = document.getElementById('navStaffManage');
       const settingsBtn = document.getElementById('navSettings');
       const reportsBtn = document.getElementById('navReports');
+      const reportDocBtn = document.getElementById('navReportDoc');
       const loginBtn = document.getElementById('navLoginBtn');
       if (session) {
         box.classList.remove('hidden');
@@ -1402,11 +1538,13 @@
         adminBtn.classList.toggle('hidden', session.role !== 'admin');
         settingsBtn.classList.toggle('hidden', session.role !== 'admin');
         reportsBtn.classList.toggle('hidden', session.role !== 'admin');
+        reportDocBtn.classList.toggle('hidden', session.role !== 'admin');
       } else {
         box.classList.add('hidden');
         adminBtn.classList.add('hidden');
         settingsBtn.classList.add('hidden');
         reportsBtn.classList.add('hidden');
+        reportDocBtn.classList.add('hidden');
         loginBtn.classList.remove('hidden');
       }
     }
@@ -1612,15 +1750,21 @@
     function switchReportsTab(tab) {
       const historyBtn = document.getElementById('reportsTabHistoryBtn');
       const errorBtn = document.getElementById('reportsTabErrorBtn');
+      const loginBtn = document.getElementById('reportsTabLoginBtn');
       const historyPane = document.getElementById('reportsHistoryPane');
       const errorPane = document.getElementById('reportsErrorPane');
+      const loginPane = document.getElementById('reportsLoginPane');
       const activeStyle = { borderColor: 'var(--teal)', color: 'var(--teal-dark)' };
       const inactiveStyle = { borderColor: 'transparent', color: '#9ca3af' };
       Object.assign(historyBtn.style, tab === 'history' ? activeStyle : inactiveStyle);
       Object.assign(errorBtn.style, tab === 'error' ? activeStyle : inactiveStyle);
+      Object.assign(loginBtn.style, tab === 'login' ? activeStyle : inactiveStyle);
       historyPane.classList.toggle('hidden', tab !== 'history');
       errorPane.classList.toggle('hidden', tab !== 'error');
-      if (tab === 'history') refreshHistoryReport(); else refreshErrorLogReport();
+      loginPane.classList.toggle('hidden', tab !== 'login');
+      if (tab === 'history') refreshHistoryReport();
+      else if (tab === 'error') refreshErrorLogReport();
+      else refreshLoginHistoryReport();
     }
 
     async function refreshHistoryReport() {
@@ -1662,7 +1806,28 @@
       }
     }
 
-    // Loads the active funding sources and fills a <select> with them,
+    async function refreshLoginHistoryReport() {
+      const body = document.getElementById('reportsLoginBody');
+      body.innerHTML = '<tr><td colspan="6" class="text-center text-gray-400 py-4">กำลังโหลด...</td></tr>';
+      try {
+        const rows = await callServer('getLoginHistory', {});
+        body.innerHTML = rows.map(r => {
+          const ok = r.result === 'success';
+          return `
+          <tr class="border-b">
+            <td class="py-1.5 pr-2 whitespace-nowrap text-gray-500">${r.timestamp || ''}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap font-semibold" style="color:var(--teal-dark)">${r.username || ''}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap">${r.displayName || ''}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap">${r.role || ''}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap"><span class="badge ${ok ? 'tone-neutral' : 'tone-error'}" style="${ok ? 'color:var(--teal-dark); background:var(--teal-bg);' : 'color:#b91c1c; background:#fee2e2;'}">${ok ? 'สำเร็จ' : 'ล้มเหลว'}</span></td>
+            <td class="py-1.5 pr-2 max-w-[200px] truncate" title="${r.detail || ''}">${r.detail || '-'}</td>
+          </tr>`;
+        }).join('') || '<tr><td colspan="6" class="text-center text-gray-400 py-4">ยังไม่มีประวัติการเข้าสู่ระบบ</td></tr>';
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 py-4">${err.message}</td></tr>`;
+      }
+    }
+
     // keeping the record's current value selectable even if it was since
     // retired/renamed (so opening an old item for edit never silently blanks
     // its funding source).
@@ -1697,6 +1862,344 @@
       const sel = document.getElementById(selectId);
       if (sel.value === '__other__') return document.getElementById(selectId + 'Other').value.trim();
       return sel.value;
+    }
+
+    // ========== BULK IMPORT (นำเข้าข้อมูลชุดใหญ่) ==========
+    // Parses pasted rows (tab / ; / , separated) into items and calls the
+    // addBulkAssets API once. All parsing/validation is client-side preview;
+    // the server re-validates every field before writing any row.
+    function openBulkImportModal() {
+      document.getElementById('bulkImportModal').classList.remove('hidden');
+      document.getElementById('bulkErrors').innerHTML = '';
+      updateBulkCount();
+      document.getElementById('bulkInput').focus();
+    }
+    function closeBulkImportModal() {
+      document.getElementById('bulkImportModal').classList.add('hidden');
+    }
+    function fillBulkExample() {
+      document.getElementById('bulkInput').value =
+        ['แอร์ Mitsubishi 12000 BTU, electrical, 2, 18000, เงินบริจาค, หอหญิง, 2026-01-15, นายสมชาย',
+         'โต๊ะนักเรียน 1 ที่นั่ง, furniture, 10, 850, เงินบริจาค, ห้อง 102, 2026-02-01',
+         'คอมพิวเตอร์ตั้งโต๊ะ, it, 3, 15000, งบประมาณ, ห้อง IT, 2026-03-10'].join('\n');
+      updateBulkCount();
+    }
+    function parseBulkInput() {
+      const raw = document.getElementById('bulkInput').value;
+      const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(l => l.length);
+      const catByLabel = {};
+      Object.keys(CATEGORY_LABELS).forEach(k => { catByLabel[CATEGORY_LABELS[k]] = k; });
+      const items = [];
+      const errors = [];
+      lines.forEach((line, i) => {
+        const sep = line.includes('\t') ? '\t' : (line.includes(';') ? ';' : ',');
+        const cols = line.split(sep).map(c => c.trim());
+        const [itemName, category, quantity, unit, price, sourceOfMoney,
+               location, purchaseDate, buyerName, installer, note, description, inventoryId] = cols;
+        if (!itemName) { errors.push('แถวที่ ' + (i + 1) + ': ขาดชื่อรายการ — ข้าม'); return; }
+        let cat = (category || 'others').trim();
+        if (catByLabel[cat]) cat = catByLabel[cat];
+        if (!Object.prototype.hasOwnProperty.call(CATEGORY_LABELS, cat)) cat = 'others';
+        items.push({
+          itemName, category: cat,
+          quantity: quantity || '1', unit: unit || 'ชิ้น', price: price || '0',
+          sourceOfMoney: sourceOfMoney || '', location: location || '',
+          purchaseDate: purchaseDate || '', buyerName: buyerName || '',
+          installer: installer || '', note: note || '', description: description || '',
+          inventoryId: inventoryId || ''
+        });
+      });
+      return { items, errors };
+    }
+    function updateBulkCount() {
+      const el = document.getElementById('bulkCount');
+      if (el) el.innerText = parseBulkInput().items.length + ' รายการที่อ่านได้';
+    }
+    async function submitBulkImport() {
+      const { items, errors } = parseBulkInput();
+      document.getElementById('bulkErrors').innerHTML =
+        errors.map(e => `<div class="text-red-600 text-xs">• ${e}</div>`).join('');
+      if (!items.length) { Swal.fire('ไม่มีข้อมูล', 'กรอกข้อมูลอย่างน้อย 1 แถว (ดูตัวอย่างได้)', 'warning'); return; }
+      showLoading(true);
+      try {
+        const res = await callServer('addBulkAssets', { items });
+        showLoading(false);
+        const first = (res.firstIds && res.firstIds.length) ? '\nรหัสแรก: ' + res.firstIds.join(', ') : '';
+        Swal.fire('สำเร็จ', res.message + first, 'success');
+        closeBulkImportModal();
+        document.getElementById('bulkInput').value = '';
+        updateBulkCount();
+        loadAssets();
+      } catch (err) {
+        showLoading(false);
+        Swal.fire('ข้อผิดพลาด', err.message, 'error');
+      }
+    }
+
+    // ========== REPORT DOCUMENT (admin) — formal A4 "รายงานเอกสาร" ==========
+    // Generates a printable document from the already-loaded asset list
+    // (allAssets), grouped by category / status / funding source, with an
+    // optional summary table, a detailed inventory table, and a signature
+    // block. Export as PDF (via the shared #printArea + window.print path),
+    // CSV, or Excel — all client-side, no extra API calls. Modeled on
+    // rdf-billing-app's Export Report (A4) and RDF_001's reports.
+    function openReportDocModal() {
+      if (!document.getElementById('rdDateTo').value) {
+        document.getElementById('rdDateTo').value = new Date().toISOString().slice(0, 10);
+      }
+      document.getElementById('reportDocModal').classList.remove('hidden');
+      renderReportDocPreview();
+    }
+
+    function closeReportDocModal() {
+      document.getElementById('reportDocModal').classList.add('hidden');
+    }
+
+    // Read the current modal settings and filter the asset list by date range.
+    function getRDSettings() {
+      const from = document.getElementById('rdDateFrom').value;
+      const to = document.getElementById('rdDateTo').value;
+      const rows = allAssets.filter(a => {
+        const d = a.purchaseDate || '';
+        if (from && d && d < from) return false;
+        if (to && d && d > to) return false;
+        return true;
+      });
+      const group = (document.querySelector('input[name="rdGroup"]:checked') || { value: 'category' }).value;
+      return {
+        rows,
+        group,
+        summary: document.getElementById('rdChkSummary').checked,
+        details: document.getElementById('rdChkDetails').checked
+      };
+    }
+
+    function rdGroupKeyFn(group) {
+      if (group === 'status') return a => a.status || 'ไม่ระบุ';
+      if (group === 'fund') return a => a.sourceOfMoney || 'ไม่ระบุ';
+      return a => CATEGORY_LABELS[a.category] || a.category || 'อื่นๆ';
+    }
+    function rdGroupLabel(group) {
+      return group === 'status' ? 'สถานะ' : (group === 'fund' ? 'แหล่งเงิน' : 'หมวดหมู่');
+    }
+    function rdItemValue(a) {
+      return (parseFloat(a.price) || 0) * (parseFloat(a.quantity) || 1);
+    }
+    function buildReportDocHtml() {
+      const s = getRDSettings();
+      const esc = v => String(v === null || v === undefined ? '' : v)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const org = document.getElementById('rdOrgName').value.trim() || 'มูลนิธิ RDF';
+      const title = document.getElementById('rdTitle').value.trim() || 'รายงานสรุปครุภัณฑ์';
+      const docNo = document.getElementById('rdDocNo').value.trim();
+      const docDate = document.getElementById('rdDocDate').value.trim() || formatThaiDate(new Date().toISOString().slice(0, 10));
+      const from = document.getElementById('rdDateFrom').value;
+      const to = document.getElementById('rdDateTo').value;
+      const totalValue = s.rows.reduce((sum, a) => sum + rdItemValue(a), 0);
+
+      let summaryHtml = '';
+      if (s.summary) {
+        const keyFn = rdGroupKeyFn(s.group);
+        const groups = {};
+        s.rows.forEach(a => {
+          const k = keyFn(a);
+          if (!groups[k]) groups[k] = { count: 0, value: 0 };
+          groups[k].count += 1;
+          groups[k].value += rdItemValue(a);
+        });
+        const cell = 'border:1px solid #111; padding:5px 8px;';
+        summaryHtml = `
+          <h3 style="margin:18px 0 6px; font-size:13px;">สรุปตาม${rdGroupLabel(s.group)}</h3>
+          <table style="width:100%; border-collapse:collapse; font-size:12px;">
+            <thead><tr style="background:#f0f0f0;">
+              <th style="${cell}; text-align:left;">${rdGroupLabel(s.group)}</th>
+              <th style="${cell}; text-align:right;">จำนวน (ชิ้น)</th>
+              <th style="${cell}; text-align:right;">มูลค่า (บาท)</th>
+            </tr></thead>
+            <tbody>
+              ${Object.keys(groups).sort().map(k => `
+                <tr>
+                  <td style="${cell}">${esc(k)}</td>
+                  <td style="${cell}; text-align:right;">${groups[k].count.toLocaleString()}</td>
+                  <td style="${cell}; text-align:right;">${groups[k].value.toLocaleString()}</td>
+                </tr>`).join('')}
+              <tr style="background:#fafafa;">
+                <td style="${cell}; font-weight:700;">รวม</td>
+                <td style="${cell}; text-align:right; font-weight:700;">${s.rows.length.toLocaleString()}</td>
+                <td style="${cell}; text-align:right; font-weight:700;">${totalValue.toLocaleString()}</td>
+              </tr>
+            </tbody>
+          </table>`;
+      }
+      let detailsHtml = '';
+      if (s.details) {
+        const cell = 'border:1px solid #111; padding:5px 8px;';
+        detailsHtml = `
+          <h3 style="margin:18px 0 6px; font-size:13px;">รายการละเอียด (${s.rows.length} รายการ)</h3>
+          <table style="width:100%; border-collapse:collapse; font-size:11px;">
+            <thead><tr style="background:#f0f0f0;">
+              <th style="${cell}">#</th>
+              <th style="${cell}">รหัส</th>
+              <th style="${cell}">ชื่อรายการ</th>
+              <th style="${cell}">หมวดหมู่</th>
+              <th style="${cell}">สถานะ</th>
+              <th style="${cell}">จำนวน</th>
+              <th style="${cell}; text-align:right;">ราคา (บ.)</th>
+              <th style="${cell}">แหล่งเงิน</th>
+              <th style="${cell}">สถานที่</th>
+            </tr></thead>
+            <tbody>
+              ${s.rows.map((a, i) => `
+                <tr>
+                  <td style="${cell}">${i + 1}</td>
+                  <td style="${cell}">${esc(a.inventoryId)}</td>
+                  <td style="${cell}">${esc(a.itemName)}</td>
+                  <td style="${cell}">${esc(CATEGORY_LABELS[a.category] || a.category || '')}</td>
+                  <td style="${cell}">${esc(a.status)}</td>
+                  <td style="${cell}; text-align:right;">${esc(a.quantity)} ${esc(a.unit)}</td>
+                  <td style="${cell}; text-align:right;">${a.price ? parseFloat(a.price).toLocaleString() : '0'}</td>
+                  <td style="${cell}">${esc(a.sourceOfMoney) || '-'}</td>
+                  <td style="${cell}">${esc(a.location) || '-'}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>`;
+      }
+      const preparer = document.getElementById('rdSignPreparer').value.trim();
+      const reviewer = document.getElementById('rdSignReviewer').value.trim();
+      const approver = document.getElementById('rdSignApprover').value.trim();
+      let signatures = '';
+      if (preparer || reviewer || approver) {
+        const box = (n, l) => n ? `
+          <div style="text-align:center; flex:1;">
+            <div style="height:52px;"></div>
+            <div style="border-bottom:1px solid #111; width:160px; margin:0 auto;"></div>
+            <p style="margin:2px 0 0; font-size:12px;">${esc(l)}<br><b>${esc(n)}</b></p>
+          </div>` : '';
+        signatures = `
+          <div style="display:flex; gap:20px; margin-top:36px;">
+            ${box(preparer, 'ผู้จัดทำ/ผู้รับผิดชอบ')}
+            ${box(reviewer, 'ผู้ตรวจสอบ')}
+            ${box(approver, 'ผู้อนุมัติ')}
+          </div>`;
+      }
+
+      const rangeText = (from || to)
+        ? `ช่วงวันที่: ${formatThaiDate(from) || 'เริ่มต้น'} ถึง ${formatThaiDate(to) || 'ปัจจุบัน'}`
+        : '';
+
+      return `
+        <div style="font-family: 'Sarabun','Tahoma',sans-serif; padding:28px; color:#111; font-size:13px;">
+          <div style="text-align:center; border-bottom:2px solid #111; padding-bottom:10px;">
+            <img src="logo.png" alt="" style="height:50px; object-fit:contain; margin-bottom:4px;" onerror="this.style.display='none'">
+            <div style="font-size:15px; font-weight:700; line-height:1.4;">${esc(org)}</div>
+            <div style="font-size:14px; font-weight:700; margin-top:2px;">${esc(title)}</div>
+            ${docNo ? `<div style="font-size:12px;">เลขที่ ${esc(docNo)}</div>` : ''}
+          </div>
+          <div style="display:flex; justify-content:space-between; flex-wrap:wrap; font-size:12px; margin:10px 0 4px;">
+            <span>วันที่เอกสาร: ${esc(docDate)}</span>
+            ${rangeText ? `<span>${esc(rangeText)}</span>` : ''}
+            <span>ระบบบริหารจัดการครุภัณฑ์ RDF</span>
+          </div>
+          ${summaryHtml}
+          ${detailsHtml}
+          ${signatures}
+          <p style="font-size:10px; color:#888; margin-top:20px; text-align:center;">เอกสารนี้สร้างโดยระบบบริหารจัดการครุภัณฑ์ มูลนิธิ RDF</p>
+        </div>`;
+    }
+
+    function renderReportDocPreview() {
+      const el = document.getElementById('rdPreview');
+      if (el) el.innerHTML = buildReportDocHtml();
+    }
+
+    // PDF / print — reuses the existing #printArea + window.print() path so
+    // the browser's "Save as PDF" produces the file (same mechanism as QR labels).
+    function printReportDoc() {
+      if (!getRDSettings().rows.length) { Swal.fire('ไม่มีข้อมูล', 'ไม่มีรายการในช่วงวันที่นี้', 'info'); return; }
+      document.getElementById('printArea').innerHTML = buildReportDocHtml();
+      window.print();
+    }
+
+    function downloadBlob(content, mime, filename) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    }
+    function exportReportDocCsv() {
+      const s = getRDSettings();
+      if (!s.rows.length) { Swal.fire('ไม่มีข้อมูล', 'ไม่มีรายการในช่วงวันที่นี้', 'info'); return; }
+      const docDate = document.getElementById('rdDocDate').value.trim() || formatThaiDate(new Date().toISOString().slice(0, 10));
+      const lines = [];
+      lines.push(['รายงานเอกสาร: ' + (document.getElementById('rdTitle').value.trim() || 'รายงานสรุปครุภัณฑ์')]);
+      lines.push(['หน่วยงาน: ' + (document.getElementById('rdOrgName').value.trim() || 'มูลนิธิ RDF')]);
+      lines.push(['วันที่: ' + docDate]);
+      const from = document.getElementById('rdDateFrom').value;
+      const to = document.getElementById('rdDateTo').value;
+      if (from || to) lines.push(['ช่วงวันที่: ' + (formatThaiDate(from) || 'เริ่มต้น') + ' ถึง ' + (formatThaiDate(to) || 'ปัจจุบัน')]);
+      lines.push([]);
+      if (s.summary) {
+        lines.push(['สรุปตาม' + rdGroupLabel(s.group), 'จำนวน (ชิ้น)', 'มูลค่า (บาท)']);
+        const keyFn = rdGroupKeyFn(s.group);
+        const groups = {};
+        s.rows.forEach(a => {
+          const k = keyFn(a);
+          if (!groups[k]) groups[k] = { count: 0, value: 0 };
+          groups[k].count++; groups[k].value += rdItemValue(a);
+        });
+        Object.keys(groups).sort().forEach(k => lines.push([k, groups[k].count, groups[k].value]));
+        lines.push(['รวม', s.rows.length, s.rows.reduce((sum, a) => sum + rdItemValue(a), 0)]);
+        lines.push([]);
+      }
+      if (s.details) {
+        lines.push(['#', 'รหัส', 'ชื่อรายการ', 'หมวดหมู่', 'สถานะ', 'จำนวน', 'ราคา (บาท)', 'แหล่งเงิน', 'สถานที่']);
+        s.rows.forEach((a, i) => lines.push([
+          i + 1, a.inventoryId, a.itemName, CATEGORY_LABELS[a.category] || a.category || '', a.status,
+          a.quantity, a.price, a.sourceOfMoney || '', a.location || ''
+        ]));
+      }
+      downloadBlob('\ufeff' + lines.map(r => r.map(csvEscape).join(',')).join('\r\n'),
+        'text/csv;charset=utf-8;', 'รายงานเอกสาร_' + new Date().toISOString().slice(0, 10) + '.csv');
+    }
+
+    // Excel — a lightweight HTML-table workbook saved as .xls (Excel opens it
+    // natively), avoiding a heavy SheetJS dependency. UTF-8 BOM keeps Thai text intact.
+    function exportReportDocExcel() {
+      const s = getRDSettings();
+      if (!s.rows.length) { Swal.fire('ไม่มีข้อมูล', 'ไม่มีรายการในช่วงวันที่นี้', 'info'); return; }
+      const esc = v => String(v === null || v === undefined ? '' : v)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const docDate = document.getElementById('rdDocDate').value.trim() || formatThaiDate(new Date().toISOString().slice(0, 10));
+      let body = `<table border="1"><tr><td colspan="5"><b>${esc(document.getElementById('rdOrgName').value.trim() || 'มูลนิธิ RDF')}</b></td></tr>
+        <tr><td colspan="5"><b>${esc(document.getElementById('rdTitle').value.trim() || 'รายงานสรุปครุภัณฑ์')}</b></td></tr>
+        <tr><td colspan="5">วันที่: ${esc(docDate)}</td></tr></table><br>`;
+      if (s.summary) {
+        body += `<table border="1"><tr><th>${esc(rdGroupLabel(s.group))}</th><th>จำนวน (ชิ้น)</th><th>มูลค่า (บาท)</th></tr>`;
+        const keyFn = rdGroupKeyFn(s.group);
+        const groups = {};
+        s.rows.forEach(a => {
+          const k = keyFn(a);
+          if (!groups[k]) groups[k] = { count: 0, value: 0 };
+          groups[k].count++; groups[k].value += rdItemValue(a);
+        });
+        Object.keys(groups).sort().forEach(k => {
+          body += `<tr><td>${esc(k)}</td><td>${groups[k].count}</td><td>${groups[k].value}</td></tr>`;
+        });
+        body += `<tr><td><b>รวม</b></td><td><b>${s.rows.length}</b></td><td><b>${s.rows.reduce((sum, a) => sum + rdItemValue(a), 0)}</b></td></tr></table><br>`;
+      }
+      if (s.details) {
+        body += `<table border="1"><tr><th>#</th><th>รหัส</th><th>ชื่อรายการ</th><th>หมวดหมู่</th><th>สถานะ</th><th>จำนวน</th><th>ราคา (บาท)</th><th>แหล่งเงิน</th><th>สถานที่</th></tr>`;
+        s.rows.forEach((a, i) => {
+          body += `<tr><td>${i + 1}</td><td>${esc(a.inventoryId)}</td><td>${esc(a.itemName)}</td>
+            <td>${esc(CATEGORY_LABELS[a.category] || a.category || '')}</td><td>${esc(a.status)}</td>
+            <td>${esc(a.quantity)}</td><td>${a.price || 0}</td><td>${esc(a.sourceOfMoney || '')}</td><td>${esc(a.location || '')}</td></tr>`;
+        });
+        body += '</table>';
+      }
+      const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body>' + body + '</body></html>';
+      downloadBlob('\ufeff' + html, 'application/vnd.ms-excel', 'รายงานเอกสาร_' + new Date().toISOString().slice(0, 10) + '.xls');
     }
 
     async function refreshStaffList() {
