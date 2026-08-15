@@ -87,6 +87,8 @@
       .bottom-nav-item.active i { transform: translateY(-2px); }
       .bottom-nav-item:active { transform: scale(0.95); }
       #printBar { bottom: 78px; }
+      #mobileMenu { animation: slideDown .2s ease-out; }
+      @keyframes slideDown { from { opacity:0; max-height:0; } to { opacity:1; max-height:70vh; } }
     }
 
     /* ===== Buttons: pill shape, colored glow (Flip7 language) ===== */
@@ -240,33 +242,36 @@
 </head>
 <body>
 
-  <!-- Top Navbar -->
+  <!-- Top Navbar — responsive: desktop shows horizontal menu, mobile shows hamburger -->
   <nav class="bg-white shadow-sm sticky top-0 z-50">
     <div class="max-w-5xl mx-auto px-4">
       <div class="flex justify-between items-center h-16">
-        <div class="flex items-center gap-3">
-          <div class="flex items-center space-x-2 cursor-pointer" onclick="goHome()">
-            <img src="logo.png" alt="RDF" class="h-9 w-9 rounded-full object-contain">
-            <span class="font-extrabold text-xl text-gray-800">RDF Asset</span>
-          </div>
+        <div class="flex items-center gap-2 cursor-pointer flex-shrink-0" onclick="goHome()">
+          <img src="logo.png" alt="RDF" class="h-9 w-9 rounded-full object-contain">
+          <span class="font-extrabold text-xl text-gray-800 truncate max-w-[120px] sm:max-w-none">RDF Asset</span>
           <span id="dbStatusIndicator" class="hidden sm:flex items-center gap-1.5 text-xs text-gray-400 cursor-pointer" onclick="showDbStatusDetail()" title="สถานะการเชื่อมต่อฐานข้อมูล">
             <span id="dbStatusDot" class="inline-block w-2 h-2 rounded-full bg-gray-300"></span>
-            <span id="dbStatusText">ยังไม่ตรวจสอบ</span>
+            <span id="dbStatusText" class="hidden lg:inline">ยังไม่ตรวจสอบ</span>
           </span>
         </div>
-        <div id="sessionInfo" class="hidden flex items-center gap-3 text-xs text-gray-500">
-          <span><i class="fas fa-user-circle mr-1"></i><span id="sessionName">-</span></span>
-          <button id="navStaffManage" onclick="openStaffModal()" class="hidden hover-brand hover:underline">จัดการบัญชี</button>
-          <button id="navSettings" onclick="openSettingsModal()" class="hidden hover-brand hover:underline">ตั้งค่า</button>
-          <button id="navReports" onclick="openReportsModal()" class="hidden hover-brand hover:underline">รายงาน</button>
-          <button id="navReportDoc" onclick="openReportDocModal()" class="hidden hover-brand hover:underline">รายงานเอกสาร</button>
-          <button onclick="openProfileModal()" class="hover-brand hover:underline">แก้ไขข้อมูลส่วนตัว</button>
-          <button onclick="openChangePasswordModal()" class="hover-brand hover:underline">เปลี่ยนรหัสผ่าน</button>
-          <button onclick="logoutUser()" class="hover-brand hover:underline">ออกจากระบบ</button>
+        <div id="sessionInfo" class="hidden sm:flex items-center gap-1 xl:gap-2 text-xs text-gray-500 overflow-hidden">
+          <span class="hidden lg:inline whitespace-nowrap font-semibold text-gray-600"><i class="fas fa-user-circle mr-1"></i><span id="sessionName">-</span></span>
+          <button id="navStaffManage" onclick="openStaffModal()" class="hidden px-1.5 py-1 hover-brand hover:underline whitespace-nowrap">จัดการบัญชี</button>
+          <button id="navSettings" onclick="openSettingsModal()" class="hidden px-1.5 py-1 hover-brand hover:underline whitespace-nowrap">ตั้งค่า</button>
+          <button id="navReports" onclick="openReportsModal()" class="hidden px-1.5 py-1 hover-brand hover:underline whitespace-nowrap">รายงาน</button>
+          <button id="navReportDoc" onclick="openReportDocModal()" class="hidden px-1.5 py-1 hover-brand hover:underline whitespace-nowrap">รายงานเอกสาร</button>
+          <button onclick="openProfileModal()" class="hidden lg:inline px-1.5 py-1 hover-brand hover:underline whitespace-nowrap">โปรไฟล์</button>
+          <button onclick="openChangePasswordModal()" class="hidden lg:inline px-1.5 py-1 hover-brand hover:underline whitespace-nowrap">เปลี่ยนรหัส</button>
+          <button onclick="logoutUser()" class="px-1.5 py-1 hover-brand hover:underline whitespace-nowrap text-red-500 hidden lg:inline">ออกจากระบบ</button>
         </div>
-        <button id="navLoginBtn" onclick="promptLogin()" class="btn btn-teal text-xs px-3 py-1.5">
-          <i class="fas fa-right-to-bracket mr-1"></i>เข้าสู่ระบบ
-        </button>
+        <div class="flex items-center gap-1.5">
+          <button id="navLoginBtn" onclick="promptLogin()" class="btn btn-teal text-xs px-3 py-1.5 hidden sm:inline-flex whitespace-nowrap">
+            <i class="fas fa-right-to-bracket mr-1"></i>เข้าสู่ระบบ
+          </button>
+          <button id="hamburgerBtn" onclick="toggleMobileMenu()" class="sm:hidden text-gray-500 p-1.5 text-xl hover:text-teal transition-colors" aria-label="เมนู">
+            <i id="hamburgerIcon" class="fas fa-bars"></i>
+          </button>
+        </div>
       </div>
       <div class="flex space-x-4 overflow-x-auto pb-1" id="nav-menu">
         <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-active px-3 py-2 text-sm whitespace-nowrap"><i class="fas fa-list mr-1"></i> รายการครุภัณฑ์</button>
@@ -274,6 +279,25 @@
       </div>
     </div>
   </nav>
+
+  <!-- Mobile slide-down menu (shown by hamburger on ≤768px) -->
+  <div id="mobileMenu" class="hidden sm:hidden bg-white border-b shadow-md" style="position:sticky; top:64px; z-index:45;">
+    <div class="px-4 py-3 space-y-1 text-sm max-h-[70vh] overflow-y-auto">
+      <div class="flex items-center gap-2 border-b pb-2 mb-1 text-teal-dark font-semibold">
+        <i class="fas fa-user-circle"></i>
+        <span id="mSessionName">-</span>
+      </div>
+      <button id="mNavStaffManage" onclick="openStaffModal(); toggleMobileMenu()" class="hidden w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-users-gear w-6 text-teal"></i> จัดการบัญชี</button>
+      <button id="mNavSettings" onclick="openSettingsModal(); toggleMobileMenu()" class="hidden w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-gear w-6 text-gray-500"></i> ตั้งค่า</button>
+      <button id="mNavReports" onclick="openReportsModal(); toggleMobileMenu()" class="hidden w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-chart-simple w-6 text-sky"></i> รายงาน</button>
+      <button id="mNavReportDoc" onclick="openReportDocModal(); toggleMobileMenu()" class="hidden w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-file-lines w-6 text-gold-dark"></i> รายงานเอกสาร</button>
+      <button onclick="openProfileModal(); toggleMobileMenu()" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-user-pen w-6 text-teal"></i> แก้ไขข้อมูลส่วนตัว</button>
+      <button onclick="openChangePasswordModal(); toggleMobileMenu()" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-key w-6 text-gold-dark"></i> เปลี่ยนรหัสผ่าน</button>
+      <button onclick="logoutUser(); toggleMobileMenu()" class="w-full text-left py-2.5 px-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"><i class="fas fa-right-from-bracket w-6"></i> ออกจากระบบ</button>
+      <button id="mNavLoginBtn" onclick="promptLogin(); toggleMobileMenu()" class="hidden w-full text-left py-2.5 px-3 rounded-lg text-teal font-semibold hover:bg-teal-bg transition-colors"><i class="fas fa-right-to-bracket w-6"></i> เข้าสู่ระบบ</button>
+    </div>
+  </div>
+  <div id="mobileMenuBackdrop" class="hidden sm:hidden fixed inset-0 bg-black bg-opacity-30 z-[44]" onclick="toggleMobileMenu()"></div>
 
   <!-- Bottom nav: shown instead of the top tab row once the screen is
        squeezed narrow (mobile) — mirrors rdf-billing-app's responsive nav -->
@@ -285,6 +309,10 @@
     <button class="bottom-nav-item" id="bnav-add" onclick="switchTab('add')">
       <i class="fas fa-plus-circle"></i>
       เพิ่มใหม่
+    </button>
+    <button class="bottom-nav-item" id="bnav-more" onclick="toggleMobileMenu()">
+      <i class="fas fa-ellipsis-h"></i>
+      เพิ่มเติม
     </button>
   </nav>
 
@@ -1074,19 +1102,19 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="sm:col-span-2">
               <label class="block text-xs font-semibold mb-1">ชื่อหน่วยงาน</label>
-              <input type="text" id="rdOrgName" class="w-full border rounded-lg px-3 py-2 text-sm" value="มูลนิธิ RDF">
+              <input type="text" id="rdOrgName" oninput="renderReportDocPreview()" class="w-full border rounded-lg px-3 py-2 text-sm" value="มูลนิธิ RDF">
             </div>
             <div class="sm:col-span-2">
               <label class="block text-xs font-semibold mb-1">หัวข้อเอกสาร</label>
-              <input type="text" id="rdTitle" class="w-full border rounded-lg px-3 py-2 text-sm" value="รายงานสรุปครุภัณฑ์">
+              <input type="text" id="rdTitle" oninput="renderReportDocPreview()" class="w-full border rounded-lg px-3 py-2 text-sm" value="รายงานสรุปครุภัณฑ์">
             </div>
             <div>
               <label class="block text-xs font-semibold mb-1">เลขที่เอกสาร</label>
-              <input type="text" id="rdDocNo" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="เช่น RDF-001/2569">
+              <input type="text" id="rdDocNo" oninput="renderReportDocPreview()" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="เช่น RDF-001/2569">
             </div>
             <div>
               <label class="block text-xs font-semibold mb-1">วันที่เอกสาร</label>
-              <input type="text" id="rdDocDate" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="เว้น = วันที่ปัจจุบัน">
+              <input type="text" id="rdDocDate" oninput="renderReportDocPreview()" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="เว้น = วันที่ปัจจุบัน">
             </div>
             <div>
               <label class="block text-xs font-semibold mb-1">ช่วงวันที่ (จาก)</label>
@@ -1531,22 +1559,40 @@
       const reportsBtn = document.getElementById('navReports');
       const reportDocBtn = document.getElementById('navReportDoc');
       const loginBtn = document.getElementById('navLoginBtn');
+      const mAdminBtn = document.getElementById('mNavStaffManage');
+      const mSettingsBtn = document.getElementById('mNavSettings');
+      const mReportsBtn = document.getElementById('mNavReports');
+      const mReportDocBtn = document.getElementById('mNavReportDoc');
+      const mLoginBtn = document.getElementById('mNavLoginBtn');
+      const mName = document.getElementById('mSessionName');
       if (session) {
         box.classList.remove('hidden');
         loginBtn.classList.add('hidden');
-        document.getElementById('sessionName').innerText = session.displayName + ' (' + (session.role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่') + ')';
-        adminBtn.classList.toggle('hidden', session.role !== 'admin');
-        settingsBtn.classList.toggle('hidden', session.role !== 'admin');
-        reportsBtn.classList.toggle('hidden', session.role !== 'admin');
-        reportDocBtn.classList.toggle('hidden', session.role !== 'admin');
+        if (mLoginBtn) mLoginBtn.classList.add('hidden');
+        const roleLabel = session.role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่';
+        document.getElementById('sessionName').innerText = session.displayName + ' (' + roleLabel + ')';
+        if (mName) mName.innerText = session.displayName + ' (' + roleLabel + ')';
+        [adminBtn, mAdminBtn].forEach(b => { if (b) b.classList.toggle('hidden', session.role !== 'admin'); });
+        [settingsBtn, mSettingsBtn].forEach(b => { if (b) b.classList.toggle('hidden', session.role !== 'admin'); });
+        [reportsBtn, mReportsBtn].forEach(b => { if (b) b.classList.toggle('hidden', session.role !== 'admin'); });
+        [reportDocBtn, mReportDocBtn].forEach(b => { if (b) b.classList.toggle('hidden', session.role !== 'admin'); });
       } else {
         box.classList.add('hidden');
-        adminBtn.classList.add('hidden');
-        settingsBtn.classList.add('hidden');
-        reportsBtn.classList.add('hidden');
-        reportDocBtn.classList.add('hidden');
         loginBtn.classList.remove('hidden');
+        if (mLoginBtn) mLoginBtn.classList.remove('hidden');
+        [adminBtn, settingsBtn, reportsBtn, reportDocBtn, mAdminBtn, mSettingsBtn, mReportsBtn, mReportDocBtn].forEach(b => { if (b) b.classList.add('hidden'); });
       }
+    }
+
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobileMenu');
+      const backdrop = document.getElementById('mobileMenuBackdrop');
+      const icon = document.getElementById('hamburgerIcon');
+      if (!menu) return;
+      const show = menu.classList.contains('hidden');
+      menu.classList.toggle('hidden', !show);
+      if (backdrop) backdrop.classList.toggle('hidden', !show);
+      if (icon) icon.className = show ? 'fas fa-times' : 'fas fa-bars';
     }
 
     // Lets a user proactively open the login modal from the navbar, instead
@@ -2007,14 +2053,14 @@
           groups[k].count += 1;
           groups[k].value += rdItemValue(a);
         });
-        const cell = 'border:1px solid #111; padding:5px 8px;';
+        const cell = 'border:1px solid #111; padding:5px 8px; word-break:break-word; overflow-wrap:break-word;';
         summaryHtml = `
           <h3 style="margin:18px 0 6px; font-size:13px;">สรุปตาม${rdGroupLabel(s.group)}</h3>
-          <table style="width:100%; border-collapse:collapse; font-size:12px;">
+          <table style="width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed;">
             <thead><tr style="background:#f0f0f0;">
-              <th style="${cell}; text-align:left;">${rdGroupLabel(s.group)}</th>
-              <th style="${cell}; text-align:right;">จำนวน (ชิ้น)</th>
-              <th style="${cell}; text-align:right;">มูลค่า (บาท)</th>
+              <th style="${cell}; text-align:left; width:40%;">${rdGroupLabel(s.group)}</th>
+              <th style="${cell}; text-align:right; width:30%;">จำนวน (ชิ้น)</th>
+              <th style="${cell}; text-align:right; width:30%;">มูลค่า (บาท)</th>
             </tr></thead>
             <tbody>
               ${Object.keys(groups).sort().map(k => `
@@ -2033,20 +2079,20 @@
       }
       let detailsHtml = '';
       if (s.details) {
-        const cell = 'border:1px solid #111; padding:5px 8px;';
+        const cell = 'border:1px solid #111; padding:5px 8px; word-break:break-word; overflow-wrap:break-word;';
         detailsHtml = `
           <h3 style="margin:18px 0 6px; font-size:13px;">รายการละเอียด (${s.rows.length} รายการ)</h3>
-          <table style="width:100%; border-collapse:collapse; font-size:11px;">
+          <table style="width:100%; border-collapse:collapse; font-size:10px; table-layout:fixed;">
             <thead><tr style="background:#f0f0f0;">
-              <th style="${cell}">#</th>
-              <th style="${cell}">รหัส</th>
-              <th style="${cell}">ชื่อรายการ</th>
-              <th style="${cell}">หมวดหมู่</th>
-              <th style="${cell}">สถานะ</th>
-              <th style="${cell}">จำนวน</th>
-              <th style="${cell}; text-align:right;">ราคา (บ.)</th>
-              <th style="${cell}">แหล่งเงิน</th>
-              <th style="${cell}">สถานที่</th>
+              <th style="${cell}; width:3%;">#</th>
+              <th style="${cell}; width:12%;">รหัส</th>
+              <th style="${cell}; width:15%;">ชื่อรายการ</th>
+              <th style="${cell}; width:12%;">หมวดหมู่</th>
+              <th style="${cell}; width:10%;">สถานะ</th>
+              <th style="${cell}; width:8%; text-align:right;">จำนวน</th>
+              <th style="${cell}; width:10%; text-align:right;">ราคา (บ.)</th>
+              <th style="${cell}; width:15%;">แหล่งเงิน</th>
+              <th style="${cell}; width:15%;">สถานที่</th>
             </tr></thead>
             <tbody>
               ${s.rows.map((a, i) => `
@@ -2735,7 +2781,7 @@
       const rows = lastFilteredAssets;
       if (!rows.length) { Swal.fire('ไม่มีข้อมูล', 'ไม่มีรายการที่จะพิมพ์ในตัวกรองปัจจุบัน', 'info'); return; }
       const totalValue = rows.reduce((sum, a) => sum + (parseFloat(a.price) || 0) * (parseFloat(a.quantity) || 1), 0);
-      const cell = 'border:1px solid #ccc; padding:4px 6px;';
+      const cell = 'border:1px solid #ccc; padding:4px 6px; word-break:break-word; overflow-wrap:break-word;';
       const rowsHtml = rows.map((a, i) => `
         <tr>
           <td style="${cell}">${i + 1}</td>
