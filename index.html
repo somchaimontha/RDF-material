@@ -254,20 +254,31 @@
             <span id="dbStatusText" class="hidden lg:inline">ยังไม่ตรวจสอบ</span>
           </span>
         </div>
-        <div id="sessionInfo" class="hidden sm:flex items-center gap-1 xl:gap-2 text-xs text-gray-500 overflow-hidden">
-          <span class="hidden lg:inline whitespace-nowrap font-semibold text-gray-600"><i class="fas fa-user-circle mr-1"></i><span id="sessionName">-</span></span>
-          <button id="navStaffManage" onclick="openStaffModal()" class="hidden px-1.5 py-1 hover-brand hover:underline whitespace-nowrap">จัดการบัญชี</button>
-          <button id="navSettings" onclick="openSettingsModal()" class="hidden px-1.5 py-1 hover-brand hover:underline whitespace-nowrap">ตั้งค่า</button>
-          <button id="navReports" onclick="openReportsModal()" class="hidden px-1.5 py-1 hover-brand hover:underline whitespace-nowrap">รายงาน</button>
-          <button id="navReportDoc" onclick="openReportDocModal()" class="hidden px-1.5 py-1 hover-brand hover:underline whitespace-nowrap">รายงานเอกสาร</button>
-          <button onclick="openProfileModal()" class="hidden lg:inline px-1.5 py-1 hover-brand hover:underline whitespace-nowrap">โปรไฟล์</button>
-          <button onclick="openChangePasswordModal()" class="hidden lg:inline px-1.5 py-1 hover-brand hover:underline whitespace-nowrap">เปลี่ยนรหัส</button>
-          <button onclick="logoutUser()" class="px-1.5 py-1 hover-brand hover:underline whitespace-nowrap text-red-500 hidden lg:inline">ออกจากระบบ</button>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <button id="navLoginBtn" onclick="promptLogin()" class="btn btn-teal text-xs px-3 py-1.5 hidden sm:inline-flex whitespace-nowrap">
+        <!-- Desktop account area → login button (logged out) OR user dropdown (logged in). -->
+        <div id="sessionDropdownWrap" class="hidden sm:block relative">
+          <button id="navLoginBtn" onclick="promptLogin()" class="btn btn-teal text-xs px-3 py-1.5 whitespace-nowrap">
             <i class="fas fa-right-to-bracket mr-1"></i>เข้าสู่ระบบ
           </button>
+          <div id="sessionUserWrap" class="hidden">
+            <button id="userMenuBtn" onclick="toggleUserMenu(event)" class="flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-teal py-2 whitespace-nowrap" title="เมนูผู้ใช้">
+              <i class="fas fa-user-circle text-lg text-teal"></i>
+              <span id="sessionName" class="max-w-[100px] sm:max-w-[160px] lg:max-w-none truncate">-</span>
+              <i id="userCaret" class="fas fa-chevron-down text-[9px] text-gray-400"></i>
+            </button>
+            <div id="userMenuDropdown" class="hidden absolute right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 min-w-[220px] z-50">
+              <button onclick="openProfileModal(); toggleUserMenu()" class="w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-user-pen w-5 text-teal"></i> โปรไฟล์</button>
+              <button onclick="openChangePasswordModal(); toggleUserMenu()" class="w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-key w-5 text-gold-dark"></i> เปลี่ยนรหัสผ่าน</button>
+              <div class="border-t my-1"></div>
+              <button id="dNavStaffManage" onclick="openStaffModal(); toggleUserMenu()" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-users-gear w-5 text-teal"></i> จัดการบัญชี</button>
+              <button id="dNavSettings" onclick="openSettingsModal(); toggleUserMenu()" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-gear w-5 text-gray-500"></i> ตั้งค่า</button>
+              <button id="dNavReports" onclick="openReportsModal(); toggleUserMenu()" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-chart-simple w-5 text-sky"></i> รายงาน</button>
+              <button id="dNavReportDoc" onclick="openReportDocModal(); toggleUserMenu()" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-file-lines w-5 text-gold-dark"></i> รายงานเอกสาร</button>
+              <div class="border-t my-1"></div>
+              <button onclick="logoutUser()" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-right-from-bracket w-5"></i> ออกจากระบบ</button>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center">
           <button id="hamburgerBtn" onclick="toggleMobileMenu()" class="sm:hidden text-gray-500 p-1.5 text-xl hover:text-teal transition-colors" aria-label="เมนู">
             <i id="hamburgerIcon" class="fas fa-bars"></i>
           </button>
@@ -1152,13 +1163,17 @@
           <div class="text-xs text-gray-500">ข้อมูลอิงจากรายการครุภัณฑ์ทั้งหมด (ช่วงวันที่กรองจาก "วันที่ซื้อ") — สร้าง/ส่งออกผลลัพธ์ฝั่งเว็บ ไม่มีการเรียก API เพิ่มเติม</div>
         </div>
 
-        <!-- RIGHT: live A4 preview -->
-        <div class="p-4 max-h-[70vh] overflow-y-auto bg-gray-50">
-          <div id="rdPreview" class="mx-auto bg-white shadow-lg" style="max-width:800px;"><!-- injected --></div>
+        <!-- RIGHT: live A4 preview (scrolls if narrower than A4 width instead of squishing) -->
+        <div class="p-4 max-h-[70vh] overflow-auto bg-gray-50">
+          <div id="rdPreview" class="mx-auto bg-white shadow-lg" style="min-width:640px; max-width:820px;"><!-- injected --></div>
         </div>
       </div>
       <div class="p-4 border-t flex flex-wrap gap-3 items-center justify-between">
-        <span class="text-xs text-gray-500">ปุ่ม PDF ใช้ "บันทึกเป็น PDF" ในหน้าต่างพิมพ์เพื่อส่งออกไฟล์</span>
+        <div class="flex items-center gap-2 flex-wrap">
+          <button onclick="saveReportDocSettings()" class="btn btn-neutral text-xs px-3 py-1.5" style="min-height:36px;" title="บันทึกค่าตั้งค่าเอกสารนี้ไว้ในเครื่อง"><i class="fas fa-floppy-disk mr-1"></i> บันทึกรูปแบบ</button>
+          <button onclick="loadReportDocSettings()" class="btn btn-neutral text-xs px-3 py-1.5" style="min-height:36px;" title="โหลดค่าตั้งค่าที่บันทึกไว้กลับมา"><i class="fas fa-arrow-rotate-left mr-1"></i> โหลดรูปแบบ</button>
+          <span class="text-xs text-gray-500">ปุ่ม PDF ใช้ "บันทึกเป็น PDF" ในหน้าต่างพิมพ์เพื่อส่งออกไฟล์</span>
+        </div>
         <div class="flex gap-2">
           <button onclick="exportReportDocCsv()" class="btn btn-neutral"><i class="fas fa-file-csv mr-1"></i> CSV</button>
           <button onclick="exportReportDocExcel()" class="btn btn-neutral"><i class="fas fa-file-excel mr-1"></i> Excel</button>
@@ -1553,36 +1568,52 @@
 
     function updateSessionUI() {
       const session = currentSession || loadCachedSession();
-      const box = document.getElementById('sessionInfo');
-      const adminBtn = document.getElementById('navStaffManage');
-      const settingsBtn = document.getElementById('navSettings');
-      const reportsBtn = document.getElementById('navReports');
-      const reportDocBtn = document.getElementById('navReportDoc');
       const loginBtn = document.getElementById('navLoginBtn');
-      const mAdminBtn = document.getElementById('mNavStaffManage');
-      const mSettingsBtn = document.getElementById('mNavSettings');
-      const mReportsBtn = document.getElementById('mNavReports');
-      const mReportDocBtn = document.getElementById('mNavReportDoc');
+      const userWrap = document.getElementById('sessionUserWrap');
       const mLoginBtn = document.getElementById('mNavLoginBtn');
       const mName = document.getElementById('mSessionName');
+      const nameEl = document.getElementById('sessionName');
+      const adminIds = ['dNavStaffManage', 'dNavSettings', 'dNavReports', 'dNavReportDoc',
+                        'mNavStaffManage', 'mNavSettings', 'mNavReports', 'mNavReportDoc'];
+      const adminBtns = adminIds.map(id => document.getElementById(id)).filter(Boolean);
       if (session) {
-        box.classList.remove('hidden');
         loginBtn.classList.add('hidden');
+        if (userWrap) userWrap.classList.remove('hidden');
         if (mLoginBtn) mLoginBtn.classList.add('hidden');
         const roleLabel = session.role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่';
-        document.getElementById('sessionName').innerText = session.displayName + ' (' + roleLabel + ')';
-        if (mName) mName.innerText = session.displayName + ' (' + roleLabel + ')';
-        [adminBtn, mAdminBtn].forEach(b => { if (b) b.classList.toggle('hidden', session.role !== 'admin'); });
-        [settingsBtn, mSettingsBtn].forEach(b => { if (b) b.classList.toggle('hidden', session.role !== 'admin'); });
-        [reportsBtn, mReportsBtn].forEach(b => { if (b) b.classList.toggle('hidden', session.role !== 'admin'); });
-        [reportDocBtn, mReportDocBtn].forEach(b => { if (b) b.classList.toggle('hidden', session.role !== 'admin'); });
+        const full = session.displayName + ' (' + roleLabel + ')';
+        if (nameEl) nameEl.innerText = full;
+        if (mName) mName.innerText = full;
+        adminBtns.forEach(b => b.classList.toggle('hidden', session.role !== 'admin'));
       } else {
-        box.classList.add('hidden');
         loginBtn.classList.remove('hidden');
+        if (userWrap) userWrap.classList.add('hidden');
         if (mLoginBtn) mLoginBtn.classList.remove('hidden');
-        [adminBtn, settingsBtn, reportsBtn, reportDocBtn, mAdminBtn, mSettingsBtn, mReportsBtn, mReportDocBtn].forEach(b => { if (b) b.classList.add('hidden'); });
+        adminBtns.forEach(b => b.classList.add('hidden'));
       }
     }
+
+    // Opens/closes the desktop user dropdown. Toggles the caret direction too.
+    function toggleUserMenu(event) {
+      if (event) event.stopPropagation();
+      const dd = document.getElementById('userMenuDropdown');
+      const caret = document.getElementById('userCaret');
+      if (!dd) return;
+      const show = dd.classList.contains('hidden');
+      dd.classList.toggle('hidden', !show);
+      if (caret) caret.className = show ? 'fas fa-chevron-up text-[9px] text-gray-400' : 'fas fa-chevron-down text-[9px] text-gray-400';
+    }
+
+    // Clicking anywhere outside the dropdown closes it.
+    document.addEventListener('click', function (e) {
+      const wrap = document.getElementById('sessionDropdownWrap');
+      const dd = document.getElementById('userMenuDropdown');
+      if (dd && wrap && !dd.classList.contains('hidden') && wrap.contains(e.target) === false) {
+        dd.classList.add('hidden');
+        const caret = document.getElementById('userCaret');
+        if (caret) caret.className = 'fas fa-chevron-down text-[9px] text-gray-400';
+      }
+    });
 
     function toggleMobileMenu() {
       const menu = document.getElementById('mobileMenu');
@@ -2084,7 +2115,7 @@
           <h3 style="margin:18px 0 6px; font-size:13px;">รายการละเอียด (${s.rows.length} รายการ)</h3>
           <table style="width:100%; border-collapse:collapse; font-size:10px; table-layout:fixed;">
             <thead><tr style="background:#f0f0f0;">
-              <th style="${cell}; width:3%;">#</th>
+              <th style="${cell}; width:3%;">ลำดับ</th>
               <th style="${cell}; width:12%;">รหัส</th>
               <th style="${cell}; width:15%;">ชื่อรายการ</th>
               <th style="${cell}; width:12%;">หมวดหมู่</th>
@@ -2166,6 +2197,44 @@
       window.print();
     }
 
+    // ---- Save / load report-document template (per browser, localStorage) ----
+    const REPORT_DOC_SETTINGS_KEY = 'rdf_report_doc_settings';
+    function gatherReportDocSettings() {
+      const get = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+      const grp = document.querySelector('input[name="rdGroup"]:checked');
+      return {
+        org: get('rdOrgName'), title: get('rdTitle'), docNo: get('rdDocNo'), docDate: get('rdDocDate'),
+        dateFrom: get('rdDateFrom'), dateTo: get('rdDateTo'),
+        group: grp ? grp.value : 'category',
+        summary: document.getElementById('rdChkSummary').checked,
+        details: document.getElementById('rdChkDetails').checked,
+        preparer: get('rdSignPreparer'), reviewer: get('rdSignReviewer'), approver: get('rdSignApprover')
+      };
+    }
+    function saveReportDocSettings() {
+      try {
+        localStorage.setItem(REPORT_DOC_SETTINGS_KEY, JSON.stringify(gatherReportDocSettings()));
+        Swal.fire('บันทึกรูปแบบแล้ว', 'ค่าตั้งค่าเอกสารถูกบันทึกไว้ในเครื่องนี้แล้ว', 'success');
+      } catch (e) {
+        Swal.fire('บันทึกไม่ได้', e.message, 'error');
+      }
+    }
+    function loadReportDocSettings() {
+      let data = null;
+      try { data = JSON.parse(localStorage.getItem(REPORT_DOC_SETTINGS_KEY) || 'null'); } catch (e) { data = null; }
+      if (!data) { Swal.fire('ยังไม่มีรูปแบบ', 'ยังไม่เคยบันทึกรูปแบบเอกสารไว้ในเครื่องนี้', 'info'); return; }
+      const set = (id, v) => { const el = document.getElementById(id); if (el && v !== undefined && v !== null) el.value = v; };
+      set('rdOrgName', data.org); set('rdTitle', data.title); set('rdDocNo', data.docNo);
+      set('rdDocDate', data.docDate); set('rdDateFrom', data.dateFrom); set('rdDateTo', data.dateTo);
+      const grp = document.querySelector('input[name="rdGroup"][value="' + (data.group || 'category') + '"]');
+      if (grp) grp.checked = true;
+      document.getElementById('rdChkSummary').checked = data.summary !== false;
+      document.getElementById('rdChkDetails').checked = data.details !== false;
+      set('rdSignPreparer', data.preparer); set('rdSignReviewer', data.reviewer); set('rdSignApprover', data.approver);
+      renderReportDocPreview();
+      Swal.fire('โหลดรูปแบบแล้ว', 'โหลดค่าตั้งค่าเอกสารที่บันทึกไว้กลับมาเรียบร้อย');
+    }
+
     function downloadBlob(content, mime, filename) {
       const blob = new Blob([content], { type: mime });
       const url = URL.createObjectURL(blob);
@@ -2200,7 +2269,7 @@
         lines.push([]);
       }
       if (s.details) {
-        lines.push(['#', 'รหัส', 'ชื่อรายการ', 'หมวดหมู่', 'สถานะ', 'จำนวน', 'ราคา (บาท)', 'แหล่งเงิน', 'สถานที่']);
+        lines.push(['ลำดับ', 'รหัส', 'ชื่อรายการ', 'หมวดหมู่', 'สถานะ', 'จำนวน', 'ราคา (บาท)', 'แหล่งเงิน', 'สถานที่']);
         s.rows.forEach((a, i) => lines.push([
           i + 1, a.inventoryId, a.itemName, CATEGORY_LABELS[a.category] || a.category || '', a.status,
           a.quantity, a.price, a.sourceOfMoney || '', a.location || ''
@@ -2236,7 +2305,7 @@
         body += `<tr><td><b>รวม</b></td><td><b>${s.rows.length}</b></td><td><b>${s.rows.reduce((sum, a) => sum + rdItemValue(a), 0)}</b></td></tr></table><br>`;
       }
       if (s.details) {
-        body += `<table border="1"><tr><th>#</th><th>รหัส</th><th>ชื่อรายการ</th><th>หมวดหมู่</th><th>สถานะ</th><th>จำนวน</th><th>ราคา (บาท)</th><th>แหล่งเงิน</th><th>สถานที่</th></tr>`;
+        body += `<table border="1"><tr><th>ลำดับ</th><th>รหัส</th><th>ชื่อรายการ</th><th>หมวดหมู่</th><th>สถานะ</th><th>จำนวน</th><th>ราคา (บาท)</th><th>แหล่งเงิน</th><th>สถานที่</th></tr>`;
         s.rows.forEach((a, i) => {
           body += `<tr><td>${i + 1}</td><td>${esc(a.inventoryId)}</td><td>${esc(a.itemName)}</td>
             <td>${esc(CATEGORY_LABELS[a.category] || a.category || '')}</td><td>${esc(a.status)}</td>
