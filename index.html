@@ -2127,15 +2127,16 @@
           <h3 style="margin:18px 0 6px; font-size:13px;">รายการละเอียด (${s.rows.length} รายการ)</h3>
           <table style="width:100%; border-collapse:collapse; font-size:10px; table-layout:fixed;">
             <thead><tr style="background:#f0f0f0;">
-              <th style="${cell}; width:8%;">ลำดับ</th>
-              <th style="${cell}; width:12%;">รหัส</th>
-              <th style="${cell}; width:10%;">ชื่อรายการ</th>
-              <th style="${cell}; width:12%;">หมวดหมู่</th>
-              <th style="${cell}; width:10%;">สถานะ</th>
-              <th style="${cell}; width:8%; text-align:right;">จำนวน</th>
-              <th style="${cell}; width:10%; text-align:right;">ราคา (บ.)</th>
-              <th style="${cell}; width:15%;">แหล่งเงิน</th>
-              <th style="${cell}; width:15%;">สถานที่</th>
+              <th style="${cell}; width:5%;">ลำดับ</th>
+              <th style="${cell}; width:11%;">รหัส</th>
+              <th style="${cell}; width:12%;">ชื่อรายการ</th>
+              <th style="${cell}; width:10%;">หมวดหมู่</th>
+              <th style="${cell}; width:9%;">สถานะ</th>
+              <th style="${cell}; width:7%; text-align:right;">จำนวน</th>
+              <th style="${cell}; width:9%; text-align:right;">ราคา (บ.)</th>
+              <th style="${cell}; width:12%;">แหล่งเงิน</th>
+              <th style="${cell}; width:12%;">สถานที่</th>
+              <th style="${cell}; width:13%;">รูปภาพ</th>
             </tr></thead>
             <tbody>
               ${s.rows.map((a, i) => `
@@ -2149,6 +2150,7 @@
                   <td style="${cell}; text-align:right;">${a.price ? parseFloat(a.price).toLocaleString() : '0'}</td>
                   <td style="${cell}">${esc(a.sourceOfMoney) || '-'}</td>
                   <td style="${cell}">${esc(a.location) || '-'}</td>
+                  <td style="${cell} text-align:center;">${a.image ? `<img src="${esc(a.image)}" alt="รูป" style="max-width:52px; max-height:40px; object-fit:contain; border:1px solid #ddd;" onerror="this.outerHTML='-'">` : '-'}</td>
                 </tr>`).join('')}
             </tbody>
           </table>`;
