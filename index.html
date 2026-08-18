@@ -254,31 +254,40 @@
             <span id="dbStatusText" class="hidden lg:inline">ยังไม่ตรวจสอบ</span>
           </span>
         </div>
-        <!-- Desktop account area → login button (logged out) OR user dropdown (logged in). -->
-        <div id="sessionDropdownWrap" class="hidden sm:block relative">
-          <button id="navLoginBtn" onclick="promptLogin()" class="btn btn-teal text-xs px-3 py-1.5 whitespace-nowrap">
-            <i class="fas fa-right-to-bracket mr-1"></i>เข้าสู่ระบบ
-          </button>
-          <div id="sessionUserWrap" class="hidden">
-            <button id="userMenuBtn" onclick="toggleUserMenu(event)" class="flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-teal py-2 whitespace-nowrap" title="เมนูผู้ใช้">
-              <i class="fas fa-user-circle text-lg text-teal"></i>
-              <span id="sessionName" class="max-w-[100px] sm:max-w-[160px] lg:max-w-none truncate">-</span>
-              <i id="userCaret" class="fas fa-chevron-down text-[9px] text-gray-400"></i>
+        <!-- Top menu (admin links) — shown on wide screens only -->
+        <div id="topMenu" class="hidden lg:flex items-center gap-1 text-sm font-medium text-gray-600 flex-1 justify-center">
+          <button id="tNavStaffManage" onclick="openStaffModal()" class="hidden px-2.5 py-1.5 rounded-lg hover:bg-teal-bg hover:text-teal-dark whitespace-nowrap"><i class="fas fa-users-gear mr-1.5 text-teal"></i>จัดการบัญชี</button>
+          <button id="tNavSettings" onclick="openSettingsModal()" class="hidden px-2.5 py-1.5 rounded-lg hover:bg-teal-bg hover:text-teal-dark whitespace-nowrap"><i class="fas fa-gear mr-1.5 text-gray-500"></i>ตั้งค่า</button>
+          <button id="tNavReports" onclick="openReportsModal()" class="hidden px-2.5 py-1.5 rounded-lg hover:bg-teal-bg hover:text-teal-dark whitespace-nowrap"><i class="fas fa-chart-simple mr-1.5 text-sky"></i>รายงาน</button>
+          <button id="tNavReportDoc" onclick="openReportDocModal()" class="hidden px-2.5 py-1.5 rounded-lg hover:bg-teal-bg hover:text-teal-dark whitespace-nowrap"><i class="fas fa-file-lines mr-1.5 text-gold-dark"></i>รายงานเอกสาร</button>
+        </div>
+
+        <!-- Right: login/user + hamburger -->
+        <div class="flex items-center gap-1.5 flex-shrink-0">
+          <!-- Desktop account area → login button (logged out) OR user dropdown (logged in). -->
+          <div id="sessionDropdownWrap" class="hidden sm:block relative">
+            <button id="navLoginBtn" onclick="promptLogin()" class="btn btn-teal text-xs px-3 py-1.5 whitespace-nowrap">
+              <i class="fas fa-right-to-bracket mr-1"></i>เข้าสู่ระบบ
             </button>
-            <div id="userMenuDropdown" class="hidden absolute right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 min-w-[220px] z-50">
-              <button onclick="openProfileModal(); toggleUserMenu()" class="w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-user-pen w-5 text-teal"></i> โปรไฟล์</button>
-              <button onclick="openChangePasswordModal(); toggleUserMenu()" class="w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-key w-5 text-gold-dark"></i> เปลี่ยนรหัสผ่าน</button>
-              <div class="border-t my-1"></div>
-              <button id="dNavStaffManage" onclick="openStaffModal(); toggleUserMenu()" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-users-gear w-5 text-teal"></i> จัดการบัญชี</button>
-              <button id="dNavSettings" onclick="openSettingsModal(); toggleUserMenu()" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-gear w-5 text-gray-500"></i> ตั้งค่า</button>
-              <button id="dNavReports" onclick="openReportsModal(); toggleUserMenu()" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-chart-simple w-5 text-sky"></i> รายงาน</button>
-              <button id="dNavReportDoc" onclick="openReportDocModal(); toggleUserMenu()" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-file-lines w-5 text-gold-dark"></i> รายงานเอกสาร</button>
-              <div class="border-t my-1"></div>
-              <button onclick="logoutUser()" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-right-from-bracket w-5"></i> ออกจากระบบ</button>
+            <div id="sessionUserWrap" class="hidden">
+              <button id="userMenuBtn" onclick="toggleUserMenu(event)" class="flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-teal py-2 whitespace-nowrap" title="เมนูผู้ใช้">
+                <i class="fas fa-user-circle text-lg text-teal"></i>
+                <span id="sessionName" class="max-w-[100px] sm:max-w-[160px] lg:max-w-[220px] truncate">-</span>
+                <i id="userCaret" class="fas fa-chevron-down text-[9px] text-gray-400"></i>
+              </button>
+              <div id="userMenuDropdown" class="hidden absolute right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 min-w-[220px] z-50">
+                <button onclick="openProfileModal(); toggleUserMenu()" class="w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-user-pen w-5 text-teal"></i> โปรไฟล์</button>
+                <button onclick="openChangePasswordModal(); toggleUserMenu()" class="w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-key w-5 text-gold-dark"></i> เปลี่ยนรหัสผ่าน</button>
+                <div class="border-t my-1"></div>
+                <button id="dNavStaffManage" onclick="openStaffModal(); toggleUserMenu()" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-users-gear w-5 text-teal"></i> จัดการบัญชี</button>
+                <button id="dNavSettings" onclick="openSettingsModal(); toggleUserMenu()" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-gear w-5 text-gray-500"></i> ตั้งค่า</button>
+                <button id="dNavReports" onclick="openReportsModal(); toggleUserMenu()" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-chart-simple w-5 text-sky"></i> รายงาน</button>
+                <button id="dNavReportDoc" onclick="openReportDocModal(); toggleUserMenu()" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-file-lines w-5 text-gold-dark"></i> รายงานเอกสาร</button>
+                <div class="border-t my-1"></div>
+                <button onclick="logoutUser()" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-right-from-bracket w-5"></i> ออกจากระบบ</button>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="flex items-center">
           <button id="hamburgerBtn" onclick="toggleMobileMenu()" class="sm:hidden text-gray-500 p-1.5 text-xl hover:text-teal transition-colors" aria-label="เมนู">
             <i id="hamburgerIcon" class="fas fa-bars"></i>
           </button>
@@ -1149,6 +1158,7 @@
           <div class="flex flex-col gap-2 text-sm border rounded-lg p-3">
             <label class="flex items-center gap-2"><input type="checkbox" id="rdChkSummary" checked onchange="renderReportDocPreview()"> แสดงตารางสรุป</label>
             <label class="flex items-center gap-2"><input type="checkbox" id="rdChkDetails" checked onchange="renderReportDocPreview()"> แสดงรายการละเอียด</label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="rdChkAttach" onchange="renderReportDocPreview()"> แนบเอกสาร (รูปภาพ/ใบเสร็จที่มีในฐานข้อมูล)</label>
           </div>
 
           <div>
@@ -1574,7 +1584,8 @@
       const mName = document.getElementById('mSessionName');
       const nameEl = document.getElementById('sessionName');
       const adminIds = ['dNavStaffManage', 'dNavSettings', 'dNavReports', 'dNavReportDoc',
-                        'mNavStaffManage', 'mNavSettings', 'mNavReports', 'mNavReportDoc'];
+                        'mNavStaffManage', 'mNavSettings', 'mNavReports', 'mNavReportDoc',
+                        'tNavStaffManage', 'tNavSettings', 'tNavReports', 'tNavReportDoc'];
       const adminBtns = adminIds.map(id => document.getElementById(id)).filter(Boolean);
       if (session) {
         loginBtn.classList.add('hidden');
@@ -2047,7 +2058,8 @@
         rows,
         group,
         summary: document.getElementById('rdChkSummary').checked,
-        details: document.getElementById('rdChkDetails').checked
+        details: document.getElementById('rdChkDetails').checked,
+        attach: document.getElementById('rdChkAttach').checked
       };
     }
 
@@ -2160,6 +2172,39 @@
           </div>`;
       }
 
+      // ---- เอกสารแนบ (รูปภาพ/ใบเสร็จ) ที่มีในฐานข้อมูล ----
+      let attachHtml = '';
+      if (s.attach) {
+        const docDefs = [
+          ['รูปภาพ 1', 'image'], ['รูปภาพ 2', 'image2'],
+          ['ใบเสร็จ 1', 'receipt'], ['ใบเสร็จ 2', 'receipt2'],
+          ['ใบเสร็จ 3', 'receipt3'], ['ใบเสร็จ 4', 'receipt4']
+        ];
+        const docs = s.rows
+          .map(a => {
+            const items = docDefs
+              .filter(d => a[d[1]])
+              .map(d => ({ label: d[0], url: a[d[1]] }));
+            return items.length ? { id: a.inventoryId, name: a.itemName, items } : null;
+          })
+          .filter(Boolean);
+        if (docs.length) {
+          attachHtml = `
+          <h3 style="margin:18px 0 6px; font-size:13px;">เอกสารแนบ (${docs.length} รายการมีเอกสาร)</h3>
+          ${docs.map(d => `
+            <div style="margin:0 0 12px; page-break-inside:avoid;">
+              <p style="margin:0 0 4px; font-size:12px; font-weight:700;">${esc(d.id)} — ${esc(d.name)}</p>
+              <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                ${d.items.map(it => `
+                  <div style="text-align:center; border:1px solid #ccc; padding:4px; width:120px;">
+                    <img src="${esc(it.url)}" alt="" style="max-width:112px; max-height:84px; object-fit:contain; display:block; margin:0 auto;" onerror="this.style.display='none'">
+                    <span style="font-size:9px; color:#555;">${esc(it.label)}</span>
+                  </div>`).join('')}
+              </div>
+            </div>`).join('')}`;
+        }
+      }
+
       const rangeText = (from || to)
         ? `ช่วงวันที่: ${formatThaiDate(from) || 'เริ่มต้น'} ถึง ${formatThaiDate(to) || 'ปัจจุบัน'}`
         : '';
@@ -2179,6 +2224,7 @@
           </div>
           ${summaryHtml}
           ${detailsHtml}
+          ${attachHtml}
           ${signatures}
           <p style="font-size:10px; color:#888; margin-top:20px; text-align:center;">เอกสารนี้สร้างโดยระบบบริหารจัดการครุภัณฑ์ มูลนิธิ RDF</p>
         </div>`;
@@ -2208,6 +2254,7 @@
         group: grp ? grp.value : 'category',
         summary: document.getElementById('rdChkSummary').checked,
         details: document.getElementById('rdChkDetails').checked,
+        attach: document.getElementById('rdChkAttach').checked,
         preparer: get('rdSignPreparer'), reviewer: get('rdSignReviewer'), approver: get('rdSignApprover')
       };
     }
@@ -2230,6 +2277,7 @@
       if (grp) grp.checked = true;
       document.getElementById('rdChkSummary').checked = data.summary !== false;
       document.getElementById('rdChkDetails').checked = data.details !== false;
+      document.getElementById('rdChkAttach').checked = data.attach === true;
       set('rdSignPreparer', data.preparer); set('rdSignReviewer', data.reviewer); set('rdSignApprover', data.approver);
       renderReportDocPreview();
       Swal.fire('โหลดรูปแบบแล้ว', 'โหลดค่าตั้งค่าเอกสารที่บันทึกไว้กลับมาเรียบร้อย');
