@@ -1158,7 +1158,18 @@
           <div class="flex flex-col gap-2 text-sm border rounded-lg p-3">
             <label class="flex items-center gap-2"><input type="checkbox" id="rdChkSummary" checked onchange="renderReportDocPreview()"> แสดงตารางสรุป</label>
             <label class="flex items-center gap-2"><input type="checkbox" id="rdChkDetails" checked onchange="renderReportDocPreview()"> แสดงรายการละเอียด</label>
-            <label class="flex items-center gap-2"><input type="checkbox" id="rdChkAttach" onchange="renderReportDocPreview()"> แนบเอกสาร (รูปภาพ/ใบเสร็จที่มีในฐานข้อมูล)</label>
+            <div class="border-t pt-2">
+              <label class="flex items-center gap-2"><input type="checkbox" id="rdChkImgCol" checked onchange="renderReportDocPreview()"> แสดงรูปในคอลัมน์ (1 รูป/รายการ)</label>
+              <label class="flex items-center gap-2"><input type="checkbox" id="rdChkAttach" onchange="renderReportDocPreview()"> แนบรูป/ใบเสร็จท้ายกระดาษ (ทุกใบ)</label>
+              <div class="grid grid-cols-5 gap-2 mt-2 text-xs text-gray-600 items-end">
+                <span class="col-span-5 font-semibold text-gray-700">ขนาดรูป (กว้าง × สูง px)</span>
+                <label class="flex flex-col gap-1">รูปในคอลัมน์<input type="number" id="rdImgColW" value="112" min="20" step="4" class="border rounded px-1.5 py-1 w-full" onchange="renderReportDocPreview()"></label>
+                <label class="flex flex-col gap-1">สูง<input type="number" id="rdImgColH" value="84" min="20" step="4" class="border rounded px-1.5 py-1 w-full" onchange="renderReportDocPreview()"></label>
+                <label class="flex flex-col gap-1">ท้ายกระดาษ<input type="number" id="rdAttachW" value="224" min="20" step="8" class="border rounded px-1.5 py-1 w-full" onchange="renderReportDocPreview()"></label>
+                <label class="flex flex-col gap-1">สูง<input type="number" id="rdAttachH" value="168" min="20" step="8" class="border rounded px-1.5 py-1 w-full" onchange="renderReportDocPreview()"></label>
+                <label class="flex flex-col gap-1" title="จำนวนรูปต่อแถว (มากสุด 4)">ต่อแถว<input type="number" id="rdAttachPerRow" value="4" min="1" max="4" step="1" class="border rounded px-1.5 py-1 w-full" onchange="renderReportDocPreview()"></label>
+              </div>
+            </div>
           </div>
 
           <div>
@@ -2059,7 +2070,13 @@
         group,
         summary: document.getElementById('rdChkSummary').checked,
         details: document.getElementById('rdChkDetails').checked,
-        attach: document.getElementById('rdChkAttach').checked
+        imgCol: document.getElementById('rdChkImgCol').checked,
+        attach: document.getElementById('rdChkAttach').checked,
+        imgColW: Math.max(20, parseInt(document.getElementById('rdImgColW').value, 10) || 112),
+        imgColH: Math.max(20, parseInt(document.getElementById('rdImgColH').value, 10) || 84),
+        attachW: Math.max(20, parseInt(document.getElementById('rdAttachW').value, 10) || 224),
+        attachH: Math.max(20, parseInt(document.getElementById('rdAttachH').value, 10) || 168),
+        attachPerRow: Math.max(1, Math.min(4, parseInt(document.getElementById('rdAttachPerRow').value, 10) || 4))
       };
     }
 
@@ -2123,6 +2140,13 @@
       let detailsHtml = '';
       if (s.details) {
         const cell = 'border:1px solid #111; padding:5px 8px; word-break:break-word; overflow-wrap:break-word;';
+        // คอลัมน์รูป (ถ้าเปิด): แสดงรูปแรก 1 รูป ขนาดปรับได้
+        const imgTh = s.imgCol ? `<th style="${cell}; width:13%;">รูปภาพ</th>` : '';
+        const imgTd = a => s.imgCol
+          ? `<td style="${cell}; text-align:center;">${a.image
+              ? `<img src="${esc(a.image)}" alt="รูป" style="width:${s.imgColW}px; height:${s.imgColH}px; object-fit:cover; border:1px solid #ddd;" onerror="this.outerHTML='-'">`
+              : '-'}</td>`
+          : '';
         detailsHtml = `
           <h3 style="margin:18px 0 6px; font-size:13px;">รายการละเอียด (${s.rows.length} รายการ)</h3>
           <table style="width:100%; border-collapse:collapse; font-size:10px; table-layout:fixed;">
@@ -2136,7 +2160,7 @@
               <th style="${cell}; width:9%; text-align:right;">ราคา (บ.)</th>
               <th style="${cell}; width:12%;">แหล่งเงิน</th>
               <th style="${cell}; width:12%;">สถานที่</th>
-              <th style="${cell}; width:13%;">รูปภาพ</th>
+              ${imgTh}
             </tr></thead>
             <tbody>
               ${s.rows.map((a, i) => `
@@ -2150,7 +2174,7 @@
                   <td style="${cell}; text-align:right;">${a.price ? parseFloat(a.price).toLocaleString() : '0'}</td>
                   <td style="${cell}">${esc(a.sourceOfMoney) || '-'}</td>
                   <td style="${cell}">${esc(a.location) || '-'}</td>
-                  <td style="${cell} text-align:center;">${a.image ? `<img src="${esc(a.image)}" alt="รูป" style="max-width:52px; max-height:40px; object-fit:contain; border:1px solid #ddd;" onerror="this.outerHTML='-'">` : '-'}</td>
+                  ${imgTd(a)}
                 </tr>`).join('')}
             </tbody>
           </table>`;
@@ -2197,11 +2221,17 @@
             <div style="margin:0 0 12px; page-break-inside:avoid;">
               <p style="margin:0 0 4px; font-size:12px; font-weight:700;">${esc(d.id)} — ${esc(d.name)}</p>
               <div style="display:flex; flex-wrap:wrap; gap:8px;">
-                ${d.items.map(it => `
-                  <div style="text-align:center; border:1px solid #ccc; padding:4px; width:120px;">
-                    <img src="${esc(it.url)}" alt="" style="max-width:112px; max-height:84px; object-fit:contain; display:block; margin:0 auto;" onerror="this.style.display='none'">
-                    <span style="font-size:9px; color:#555;">${esc(it.label)}</span>
-                  </div>`).join('')}
+                ${(() => {
+                  const n = s.attachPerRow || 4;
+                  const cellW = `calc(${(100 / n).toFixed(4)}% - ${(((n - 1) / n) * 8).toFixed(2)}px)`;
+                  return d.items.map(it => `
+                    <div style="width:${cellW}; text-align:center;">
+                      <div style="border:1px solid #ccc; padding:4px; display:inline-block; max-width:100%;">
+                        <img src="${esc(it.url)}" alt="" style="width:${s.attachW}px; height:${s.attachH}px; max-width:100%; object-fit:cover; display:block; margin:0 auto;" onerror="this.style.display='none'">
+                        <span style="font-size:9px; color:#555; display:block;">${esc(it.label)}</span>
+                      </div>
+                    </div>`).join('');
+                })()}
               </div>
             </div>`).join('')}`;
         }
@@ -2256,7 +2286,10 @@
         group: grp ? grp.value : 'category',
         summary: document.getElementById('rdChkSummary').checked,
         details: document.getElementById('rdChkDetails').checked,
+        imgCol: document.getElementById('rdChkImgCol').checked,
         attach: document.getElementById('rdChkAttach').checked,
+        imgColW: get('rdImgColW'), imgColH: get('rdImgColH'),
+        attachW: get('rdAttachW'), attachH: get('rdAttachH'), attachPerRow: get('rdAttachPerRow'),
         preparer: get('rdSignPreparer'), reviewer: get('rdSignReviewer'), approver: get('rdSignApprover')
       };
     }
@@ -2279,7 +2312,10 @@
       if (grp) grp.checked = true;
       document.getElementById('rdChkSummary').checked = data.summary !== false;
       document.getElementById('rdChkDetails').checked = data.details !== false;
+      document.getElementById('rdChkImgCol').checked = data.imgCol !== false;
       document.getElementById('rdChkAttach').checked = data.attach === true;
+      set('rdImgColW', data.imgColW); set('rdImgColH', data.imgColH);
+      set('rdAttachW', data.attachW); set('rdAttachH', data.attachH); set('rdAttachPerRow', data.attachPerRow);
       set('rdSignPreparer', data.preparer); set('rdSignReviewer', data.reviewer); set('rdSignApprover', data.approver);
       renderReportDocPreview();
       Swal.fire('โหลดรูปแบบแล้ว', 'โหลดค่าตั้งค่าเอกสารที่บันทึกไว้กลับมาเรียบร้อย');
