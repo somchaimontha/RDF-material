@@ -206,7 +206,7 @@
        rdf-billing-app's responsive nav: the top tab row is desktop-only;
        below the breakpoint it's replaced by a fixed bottom tab bar. ===== */
     .bottom-nav { display: none; }
-    @media (max-width: 768px) {
+    @media (max-width: 769px) {
       #nav-menu { display: none; }
       body { padding-bottom: 76px; }
       .bottom-nav {
@@ -496,7 +496,7 @@
               </div>
             </div>
           </div>
-          <button id="hamburgerBtn" onclick="toggleMobileMenu()" class="sm:hidden text-gray-500 p-1.5 text-xl hover:text-teal transition-colors" aria-label="เมนู">
+          <button id="hamburgerBtn" onclick="toggleMobileMenu()" class="lg:hidden text-gray-500 p-1.5 text-xl hover:text-teal transition-colors" aria-label="เมนู">
             <i id="hamburgerIcon" class="fas fa-bars"></i>
           </button>
         </div>
@@ -509,7 +509,7 @@
   </nav>
 
   <!-- Mobile slide-down menu (shown by hamburger on ≤768px) -->
-  <div id="mobileMenu" class="hidden sm:hidden bg-white border-b shadow-md" style="position:sticky; top:64px; z-index:45;">
+  <div id="mobileMenu" class="hidden lg:hidden bg-white border-b shadow-md" style="position:sticky; top:64px; z-index:45;">
     <div class="px-4 py-3 space-y-1 text-sm max-h-[70vh] overflow-y-auto">
       <div class="flex items-center gap-2 border-b pb-2 mb-1 text-teal-dark font-semibold">
         <i class="fas fa-user-circle"></i>
@@ -525,7 +525,7 @@
       <button id="mNavLoginBtn" onclick="promptLogin(); toggleMobileMenu()" class="hidden w-full text-left py-2.5 px-3 rounded-lg text-teal font-semibold hover:bg-teal-bg transition-colors"><i class="fas fa-right-to-bracket w-6"></i> เข้าสู่ระบบ</button>
     </div>
   </div>
-  <div id="mobileMenuBackdrop" class="hidden sm:hidden fixed inset-0 bg-black bg-opacity-30 z-[44]" onclick="toggleMobileMenu()"></div>
+  <div id="mobileMenuBackdrop" class="hidden lg:hidden fixed inset-0 bg-black bg-opacity-30 z-[44]" onclick="toggleMobileMenu()"></div>
 
   <!-- Bottom nav: shown instead of the top tab row once the screen is
        squeezed narrow (mobile) — mirrors rdf-billing-app's responsive nav -->
@@ -732,6 +732,47 @@
       <button onclick="printSelectedLabels()" class="btn btn-gold" style="min-height:36px; padding:0 16px; font-size:13px;" title="เลือก 'บันทึกเป็น PDF' ในหน้าต่างพิมพ์เพื่อส่งออกไฟล์"><i class="fas fa-print mr-1"></i> พิมพ์ / ส่งออก PDF</button>
       <button onclick="openQrSettingsModal()" class="text-gray-300 hover:text-white text-sm px-2" title="ตั้งค่าข้อมูลบนป้าย QR"><i class="fas fa-gear"></i></button>
       <button onclick="clearSelection()" class="text-gray-300 hover:text-white text-sm px-2">ล้าง</button>
+    </div>
+
+    <!-- QR/Card print picker: uses the same selectedIds + printSelectedLabels flow as the list. -->
+    <div id="qrPrintModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex justify-center items-start p-4 overflow-y-auto">
+      <div class="bg-white rounded-xl shadow-lg w-full max-w-3xl my-6 overflow-hidden">
+        <div class="p-4 border-b flex justify-between items-center gap-3">
+          <div>
+            <h3 class="font-bold text-lg">พิมพ์ QR / การ์ด</h3>
+            <p class="text-xs text-gray-500">เลือกรายการที่ต้องการพิมพ์ป้าย QR หรือส่งออกเป็น PDF จากหน้าต่างพิมพ์</p>
+          </div>
+          <button onclick="closeQrPrintPanel()" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div class="p-4 border-b grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-3">
+          <div class="relative">
+            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+            <input id="qrPrintSearch" type="text" oninput="renderQrPrintPicker()" class="w-full pl-10 pr-4 py-2 border rounded-lg outline-none" placeholder="ค้นหาชื่อ, รหัส, สถานที่...">
+          </div>
+          <select id="qrPrintStatus" onchange="renderQrPrintPicker()" class="border rounded-lg px-3 py-2 bg-white">
+            <option value="">ทุกสถานะ</option>
+            <option value="ใช้งานได้">ใช้งานได้</option>
+            <option value="ชำรุด">ชำรุด</option>
+            <option value="ส่งซ่อม">ส่งซ่อม</option>
+            <option value="ถูกยืมอยู่">ถูกยืมอยู่</option>
+          </select>
+          <button onclick="openQrSettingsModal()" class="btn btn-neutral" style="min-height:42px;"><i class="fas fa-gear"></i> ตั้งค่าป้าย</button>
+        </div>
+        <div class="px-4 py-3 bg-gray-50 border-b flex items-center justify-between gap-3 flex-wrap">
+          <label class="flex items-center gap-2 text-sm font-semibold cursor-pointer">
+            <input type="checkbox" id="qrPrintSelectAll" onchange="setQrPickerSelectAll(this.checked)">
+            เลือกทั้งหมดที่แสดง
+          </label>
+          <span class="text-sm text-gray-500">เลือกแล้ว <b id="qrPrintSelectedCount">0</b> รายการ</span>
+        </div>
+        <div id="qrPrintList" class="max-h-[56vh] overflow-y-auto divide-y">
+          <!-- Items injected -->
+        </div>
+        <div class="p-4 border-t flex justify-end gap-2">
+          <button onclick="closeQrPrintPanel()" class="btn btn-neutral">ยกเลิก</button>
+          <button onclick="printQrPickerSelection()" class="btn btn-gold"><i class="fas fa-print"></i> พิมพ์ / ส่งออก PDF</button>
+        </div>
+      </div>
     </div>
 
 
@@ -1753,8 +1794,87 @@
 
     function openQrPrintPanel() {
       switchTab('dashboard');
-      Swal.fire('พิมพ์ QR / การ์ด', 'เลือกรายการจากทะเบียนครุภัณฑ์ แล้วกดพิมพ์จากแถบด้านล่าง หรือเปิดตั้งค่าป้าย QR ได้ทันที', 'info');
-      openQrSettingsModal();
+      if (!allAssets.length) {
+        loadAssets();
+      }
+      const modal = document.getElementById('qrPrintModal');
+      if (modal) modal.classList.remove('hidden');
+      renderQrPrintPicker();
+    }
+
+    function closeQrPrintPanel() {
+      const modal = document.getElementById('qrPrintModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    let qrPrintVisibleIds = [];
+    function getQrPrintRows() {
+      const search = (document.getElementById('qrPrintSearch')?.value || '').toLowerCase();
+      const status = document.getElementById('qrPrintStatus')?.value || '';
+      return allAssets.filter(a => {
+        const haystack = [a.inventoryId, a.itemName, a.location, a.sourceOfMoney, CATEGORY_LABELS[a.category] || a.category]
+          .join(' ').toLowerCase();
+        return (!status || a.status === status) && (!search || haystack.includes(search));
+      });
+    }
+
+    function renderQrPrintPicker() {
+      const list = document.getElementById('qrPrintList');
+      const count = document.getElementById('qrPrintSelectedCount');
+      const selectAll = document.getElementById('qrPrintSelectAll');
+      if (!list) return;
+      const rows = getQrPrintRows();
+      qrPrintVisibleIds = rows.map(a => a.inventoryId);
+      if (count) count.innerText = selectedIds.size.toLocaleString();
+      if (selectAll) {
+        selectAll.checked = rows.length > 0 && rows.every(a => selectedIds.has(a.inventoryId));
+        selectAll.indeterminate = rows.some(a => selectedIds.has(a.inventoryId)) && !selectAll.checked;
+      }
+      if (!rows.length) {
+        list.innerHTML = '<p class="text-sm text-gray-400 py-10 text-center">ไม่พบรายการที่ตรงกับเงื่อนไข</p>';
+        return;
+      }
+      list.innerHTML = rows.map(a => {
+        const checked = selectedIds.has(a.inventoryId) ? 'checked' : '';
+        const tone = getStatusTone(a.status);
+        const thumb = a.image
+          ? `<img src="${escapeHtml(a.image)}" alt="" class="w-12 h-12 rounded-lg object-cover border">`
+          : `<div class="w-12 h-12 rounded-lg grid place-items-center bg-indigo-50 text-indigo-600"><i class="fas ${CATEGORY_ICONS[a.category] || 'fa-box'}"></i></div>`;
+        return `
+          <label class="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer">
+            <input type="checkbox" class="qr-print-item" value="${escapeHtml(a.inventoryId)}" ${checked} onchange="toggleQrPickerAsset(this)">
+            ${thumb}
+            <span class="flex-1 min-w-0">
+              <span class="block font-semibold truncate">${escapeHtml(a.itemName || '-')}</span>
+              <span class="block text-xs text-gray-400 truncate">${escapeHtml(a.inventoryId || '-')} · ${escapeHtml(a.location || '-')}</span>
+            </span>
+            <span class="badge tone-${tone}">${escapeHtml(a.status || '-')}</span>
+          </label>
+        `;
+      }).join('');
+    }
+
+    function toggleQrPickerAsset(el) {
+      if (el.checked) selectedIds.add(el.value); else selectedIds.delete(el.value);
+      updatePrintBar();
+      renderQrPrintPicker();
+    }
+
+    function setQrPickerSelectAll(checked) {
+      qrPrintVisibleIds.forEach(id => {
+        if (checked) selectedIds.add(id); else selectedIds.delete(id);
+      });
+      updatePrintBar();
+      renderQrPrintPicker();
+    }
+
+    function printQrPickerSelection() {
+      if (!selectedIds.size) {
+        Swal.fire('ยังไม่ได้เลือกรายการ', 'เลือกรายการอย่างน้อย 1 รายการก่อนพิมพ์', 'warning');
+        return;
+      }
+      closeQrPrintPanel();
+      printSelectedLabels();
     }
 
     function openScanPrompt() {
@@ -2954,6 +3074,8 @@
           renderStats(allAssets);
           renderCategoryBreakdown(allAssets);
           filterAssets();
+          const qrModal = document.getElementById('qrPrintModal');
+          if (qrModal && !qrModal.classList.contains('hidden')) renderQrPrintPicker();
           showLoading(false);
         })
         .catch(err => {
@@ -3463,6 +3585,8 @@
       const selectAll = document.getElementById('selectAllChk');
       if (selectAll) selectAll.checked = false;
       updatePrintBar();
+      const qrModal = document.getElementById('qrPrintModal');
+      if (qrModal && !qrModal.classList.contains('hidden')) renderQrPrintPicker();
     }
 
     function buildLabelHtml(a) {
