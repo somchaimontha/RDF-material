@@ -170,10 +170,10 @@ GitHub Pages (index.html)  --fetch()-->  Apps Script /exec (JSON API)  --> Googl
 
 ## สถานะการ deploy (ล่าสุด)
 
-- ✅ `code.gs` deploy แล้ว เวอร์ชัน 23 (13 ส.ค. 2569 18:26) — **⚠️ มีโค้ดใหม่ที่ยังไม่ได้ deploy
-  (รหัสรัดกุม, Bulk import `addBulkAssets`, Login history `getLoginHistory` + ชีต `LoginHistory`)**
-- ✅ `index.html` push ขึ้น GitHub Pages แล้วหลายรอบ (ล่าสุด: ปรับปุ่ม Google Sign-In
-  เป็นภาษาไทย — รอ push) — **⚠️ มีโฟลเดอร์ใหม่ที่ยังไม่ได้ push: รายงานเอกสาร, นำเข้าข้อมูลชุดใหญ่, แท็บเข้าสู่ระบบ**
+- ✅ `code.gs` deploy แล้ว เวอร์ชัน 29 (29 ส.ค. 2569 13:50) — อัปเดต security hardening,
+  Bulk import, Login history และ Dashboard UI endpoint ผ่าน deployment เดิม
+- ✅ `index.html` push ขึ้น GitHub Pages แล้ว (ล่าสุด: ปรับ Dashboard เป็น sidebar workspace +
+  บันทึก security hardening)
 - ✅ รัน `setup`, `regenerateAllQrCodes`, `fixDuplicateInventoryIds` แล้ว — **⚠️ หลัง deploy ต้องรัน
   `setup()` อีกครั้ง (เวอร์ชันใหม่) เพื่อสร้างชีต `LoginHistory`**
 

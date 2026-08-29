@@ -3,6 +3,7 @@
 # DRIVE_FOLDER_ID for the real Google Sheet + Drive folder.
 code.gs
 appsscript.json
+.clasp.json
 
 # Local notes file containing admin temp password + a stale GitHub PAT — must
 # never leak to a public GitHub Pages repo.
