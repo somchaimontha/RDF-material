@@ -44,6 +44,157 @@
     }
 
     body { font-family: 'Kanit', sans-serif; background-color: var(--surface-base); color: var(--text-primary); }
+    .app-sidebar {
+      display: none;
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: 260px;
+      background: #171823;
+      color: #d7d8e5;
+      z-index: 30;
+      padding: 24px 16px 18px;
+      overflow-y: auto;
+    }
+    .app-brand-mark {
+      width: 42px; height: 42px; border-radius: 12px;
+      display: grid; place-items: center;
+      background: linear-gradient(135deg, #6658ff, #4338ca);
+      color: #fff;
+      box-shadow: 0 12px 28px rgba(79,70,229,.35);
+    }
+    .side-section-label {
+      margin: 26px 10px 10px;
+      font-size: 12px;
+      color: #7d8194;
+    }
+    .side-link {
+      width: 100%;
+      min-height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 12px;
+      color: #c8cad8;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: left;
+      transition: background .15s ease, color .15s ease, transform .15s ease;
+    }
+    .side-link i { width: 18px; color: #a8abbe; }
+    .side-link:hover { background: rgba(255,255,255,.07); color: #fff; }
+    .side-link.active {
+      background: linear-gradient(135deg, #6252f5, #4f46e5);
+      color: #fff;
+      box-shadow: 0 12px 30px rgba(79,70,229,.32);
+    }
+    .side-link.active i { color: #fff; }
+    .side-badge {
+      margin-left: auto;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: #ef4444;
+      color: #fff;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sidebar-account {
+      margin-top: 28px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      padding-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .shell-page-title { font-size: 16px; font-weight: 800; }
+    .top-search {
+      width: min(420px, 45vw);
+      height: 44px;
+      border: 1px solid #e7e7ef;
+      border-radius: 12px;
+      background: #fff;
+      padding: 0 42px;
+      outline: none;
+    }
+    .dash-hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .range-chip {
+      height: 42px;
+      padding: 0 18px;
+      border-radius: 10px;
+      border: 1px solid #e6e6ef;
+      background: #fff;
+      color: #71717a;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .range-chip.active { border-color: #4f46e5; color: #4338ca; box-shadow: inset 0 0 0 1px rgba(79,70,229,.18); }
+    .dashboard-card {
+      background: #fff;
+      border: 1px solid #ececf3;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(23,24,35,.04);
+    }
+    .donut-chart {
+      --good: 75%;
+      --broken: 80%;
+      --repair: 88%;
+      width: 168px;
+      height: 168px;
+      border-radius: 50%;
+      background: conic-gradient(#4f46e5 0 var(--good), #dc2626 var(--good) var(--broken), #d97706 var(--broken) var(--repair), #0891b2 var(--repair) 96%, #7c3aed 96% 100%);
+      position: relative;
+      flex: 0 0 auto;
+    }
+    .donut-chart::after {
+      content: "";
+      position: absolute;
+      inset: 38px;
+      border-radius: 50%;
+      background: #fff;
+    }
+    .donut-center {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      pointer-events: none;
+    }
+    .dashboard-list-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 13px 0;
+      border-bottom: 1px solid #f0f0f4;
+    }
+    .dashboard-list-row:last-child { border-bottom: 0; }
+    @media (min-width: 1024px) {
+      body { background: #f4f5f8; }
+      .app-sidebar { display: block; }
+      .app-topbar { margin-left: 260px; box-shadow: none; border-bottom: 1px solid #e6e7ee; }
+      .app-topbar > div { max-width: none; }
+      .app-main { margin-left: 260px; max-width: none; padding: 28px 28px 72px; }
+      #nav-menu { display: none !important; }
+      #topMenu { display: none !important; }
+      .bottom-nav { display: none !important; }
+    }
+    @media (max-width: 640px) {
+      .top-search { display: none; }
+      .dash-hero { align-items: flex-start; }
+      .donut-chart { width: 140px; height: 140px; }
+      .donut-chart::after { inset: 32px; }
+    }
     .nav-active { border-bottom: 3px solid var(--teal); color: var(--teal-dark); font-weight: 700; }
     .loader { border-top-color: var(--teal); -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
     @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -242,17 +393,74 @@
 </head>
 <body>
 
+  <aside class="app-sidebar">
+    <div class="flex items-center gap-3 px-2 cursor-pointer" onclick="goHome()">
+      <div class="app-brand-mark"><i class="fas fa-grip"></i></div>
+      <div>
+        <div class="font-extrabold text-white leading-tight">AssetQR <span class="text-[10px] text-indigo-300 align-middle">RDF</span></div>
+        <div class="text-xs text-gray-400">Admin Workspace</div>
+      </div>
+    </div>
+
+    <div class="mt-8 space-y-1">
+      <button id="sideDashboard" class="side-link active" onclick="switchTab('dashboard')"><i class="fas fa-table-cells-large"></i> แดชบอร์ด</button>
+      <button class="side-link" onclick="openScanPrompt()"><i class="fas fa-qrcode"></i> สแกน QR</button>
+    </div>
+
+    <div class="side-section-label">ครุภัณฑ์</div>
+    <div class="space-y-1">
+      <button id="sideRegistry" class="side-link" onclick="switchTab('dashboard'); clearFilters();"><i class="fas fa-cube"></i> ทะเบียนครุภัณฑ์</button>
+      <button class="side-link" onclick="filterOverdueAssets()"><i class="fas fa-clock"></i> กำหนดตรวจ <span id="sideOverdueBadge" class="side-badge hidden">0</span></button>
+      <button class="side-link" onclick="openQrPrintPanel()"><i class="fas fa-tags"></i> พิมพ์ QR / การ์ด</button>
+    </div>
+
+    <div class="side-section-label">ตรวจเช็ค & ซ่อม</div>
+    <div class="space-y-1">
+      <button class="side-link" onclick="openReportsModal()"><i class="fas fa-clipboard-check"></i> ประวัติการตรวจ</button>
+      <button class="side-link" onclick="filterRepairAssets()"><i class="fas fa-wrench"></i> งานแจ้งซ่อม <span id="sideRepairBadge" class="side-badge hidden">0</span></button>
+    </div>
+
+    <div class="side-section-label">ข้อมูลตั้งต้น</div>
+    <div class="space-y-1">
+      <button class="side-link" onclick="focusDashboardSearch('')"><i class="fas fa-location-dot"></i> สถานที่</button>
+      <button class="side-link" onclick="focusCategoryFilter()"><i class="fas fa-tags"></i> หมวดหมู่</button>
+      <button class="side-link" onclick="showPlannedMenu('หน่วยงาน')"><i class="fas fa-building"></i> หน่วยงาน</button>
+      <button class="side-link" onclick="showPlannedMenu('ผู้รับผิดชอบ')"><i class="fas fa-users"></i> ผู้รับผิดชอบ</button>
+    </div>
+
+    <div class="side-section-label">ระบบ</div>
+    <div class="space-y-1">
+      <button id="sNavReports" class="side-link hidden" onclick="openReportsModal()"><i class="fas fa-chart-column"></i> รายงาน</button>
+      <button id="sNavStaffManage" class="side-link hidden" onclick="openStaffModal()"><i class="fas fa-user-gear"></i> ผู้ใช้งาน</button>
+      <button id="sNavSettings" class="side-link hidden" onclick="openSettingsModal()"><i class="fas fa-gear"></i> ตั้งค่าระบบ</button>
+      <button id="sNavReportDoc" class="side-link hidden" onclick="openReportDocModal()"><i class="fas fa-file-lines"></i> รายงานเอกสาร</button>
+    </div>
+
+    <div class="sidebar-account">
+      <div class="app-brand-mark !w-9 !h-9 !rounded-full"><i class="fas fa-user"></i></div>
+      <div class="min-w-0">
+        <div id="sideSessionName" class="text-sm text-white font-bold truncate">ยังไม่ได้เข้าสู่ระบบ</div>
+        <div id="sideSessionRole" class="text-xs text-gray-400 truncate">Guest</div>
+      </div>
+      <button onclick="logoutUser()" class="ml-auto text-gray-500 hover:text-white" title="ออกจากระบบ"><i class="fas fa-right-from-bracket"></i></button>
+    </div>
+  </aside>
+
   <!-- Top Navbar — responsive: desktop shows horizontal menu, mobile shows hamburger -->
-  <nav class="bg-white shadow-sm sticky top-0 z-50">
+  <nav class="app-topbar bg-white shadow-sm sticky top-0 z-50">
     <div class="max-w-5xl mx-auto px-4">
       <div class="flex justify-between items-center h-16">
         <div class="flex items-center gap-2 cursor-pointer flex-shrink-0" onclick="goHome()">
           <img src="logo.png" alt="RDF" class="h-9 w-9 rounded-full object-contain">
-          <span class="font-extrabold text-xl text-gray-800 truncate max-w-[120px] sm:max-w-none">RDF Asset</span>
+          <span class="shell-page-title text-gray-800 truncate max-w-[120px] sm:max-w-none">แดชบอร์ด</span>
           <span id="dbStatusIndicator" class="hidden sm:flex items-center gap-1.5 text-xs text-gray-400 cursor-pointer" onclick="showDbStatusDetail()" title="สถานะการเชื่อมต่อฐานข้อมูล">
             <span id="dbStatusDot" class="inline-block w-2 h-2 rounded-full bg-gray-300"></span>
             <span id="dbStatusText" class="hidden lg:inline">ยังไม่ตรวจสอบ</span>
           </span>
+        </div>
+        <div class="hidden md:block relative mx-4 flex-1 max-w-xl">
+          <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+          <input id="globalSearchInput" type="text" class="top-search" placeholder="ค้นหาครุภัณฑ์, รหัส, สถานที่..." oninput="setDashboardSearch(this.value)">
         </div>
         <!-- Top menu (admin links) — shown on wide screens only -->
         <div id="topMenu" class="hidden lg:flex items-center gap-1 text-sm font-medium text-gray-600 flex-1 justify-center">
@@ -342,7 +550,7 @@
     <p id="loadingHint" class="hidden text-white text-sm max-w-xs text-center px-4">กำลังโหลดข้อมูล... หากไม่ได้เปิดเว็บนี้มาสักพัก เซิร์ฟเวอร์อาจใช้เวลาถึง 1 นาทีในการเริ่มทำงาน กรุณารอสักครู่</p>
   </div>
 
-  <main class="max-w-5xl mx-auto p-4 pb-20">
+  <main class="app-main max-w-5xl mx-auto p-4 pb-20">
 
     <!-- ==================== DASHBOARD VIEW ==================== -->
     <div id="view-dashboard" class="space-y-4 hidden">
@@ -356,22 +564,31 @@
         <button onclick="loadAssets()" class="btn btn-teal">เข้าสู่ระบบ</button>
       </div>
 
-      <div id="dashboardContent" class="space-y-4">
+      <div id="dashboardContent" class="space-y-6">
+
+      <div class="dash-hero">
+        <div>
+          <h1 class="text-2xl md:text-3xl font-extrabold text-gray-950">สวัสดี, ผู้ดูแลระบบ</h1>
+          <p class="text-sm text-gray-500 mt-1">ภาพรวมสถานะครุภัณฑ์และงานที่ต้องดำเนินการ</p>
+        </div>
+        <div class="flex items-center gap-3 flex-wrap">
+          <button onclick="openScanPrompt()" class="btn" style="background:#4f46e5; color:#fff; box-shadow:0 12px 24px rgba(79,70,229,.25);"><i class="fas fa-qrcode"></i> สแกน QR</button>
+          <span class="text-sm text-gray-500">ช่วงเวลา:</span>
+          <button class="range-chip">สัปดาห์นี้</button>
+          <button class="range-chip active">เดือนนี้</button>
+          <button class="range-chip">ไตรมาสนี้</button>
+          <button class="range-chip">ปีนี้</button>
+        </div>
+      </div>
 
       <!-- Stat Tiles -->
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <div class="stat-tile stat-clickable" onclick="clearFilters()" title="ดูทั้งหมด">
           <div class="stat-icon tone-neutral"><i class="fas fa-boxes-stacked"></i></div>
           <div>
             <p class="stat-label">ครุภัณฑ์ทั้งหมด</p>
             <p class="stat-value" id="statTotal">0</p>
-          </div>
-        </div>
-        <div class="stat-tile stat-clickable" onclick="openValueBreakdownModal()" title="ดูรายละเอียดมูลค่า">
-          <div class="stat-icon tone-neutral"><i class="fas fa-sack-dollar"></i></div>
-          <div>
-            <p class="stat-label">มูลค่ารวม</p>
-            <p class="stat-value" id="statValue">0 บ.</p>
+            <p class="text-xs text-gray-400 mt-1">ในระบบ</p>
           </div>
         </div>
         <div class="stat-tile stat-clickable" onclick="filterByStatus('ใช้งานได้')" title="ดูเฉพาะที่ใช้งานได้">
@@ -379,44 +596,91 @@
           <div>
             <p class="stat-label">ใช้งานได้</p>
             <p class="stat-value" id="statOk">0</p>
+            <p class="text-xs text-gray-400 mt-1">พร้อมใช้งาน</p>
           </div>
         </div>
-        <div class="stat-tile stat-clickable" onclick="filterByStatus('ชำรุด')" title="ดูเฉพาะที่ชำรุด">
+        <div class="stat-tile stat-clickable" onclick="filterOverdueAssets()" title="ดูรายการเกินกำหนด">
           <div class="stat-icon tone-coral"><i class="fas fa-triangle-exclamation"></i></div>
           <div>
-            <p class="stat-label">ชำรุด</p>
-            <p class="stat-value" id="statBroken">0</p>
+            <p class="stat-label">เกินกำหนดตรวจ</p>
+            <p class="stat-value" id="statOverdueTile">0</p>
+            <p class="text-xs text-gray-400 mt-1">ต้องตรวจด่วน</p>
           </div>
         </div>
         <div class="stat-tile stat-clickable" onclick="filterByStatus('ส่งซ่อม')" title="ดูเฉพาะที่ส่งซ่อม">
           <div class="stat-icon tone-gold"><i class="fas fa-screwdriver-wrench"></i></div>
           <div>
-            <p class="stat-label">ส่งซ่อม</p>
-            <p class="stat-value" id="statRepair">0</p>
-          </div>
-        </div>
-        <div class="stat-tile stat-clickable" onclick="filterByStatus('ถูกยืมอยู่')" title="ดูเฉพาะที่ถูกยืมอยู่">
-          <div class="stat-icon tone-sky"><i class="fas fa-hand-holding"></i></div>
-          <div>
-            <p class="stat-label">ถูกยืมอยู่</p>
-            <p class="stat-value" id="statBorrowed">0</p>
+            <p class="stat-label">รอ/กำลังซ่อม</p>
+            <p class="stat-value" id="statMaintenance">0</p>
+            <p class="text-xs text-gray-400 mt-1">มีปัญหา</p>
             <span id="statOverdueBadge" class="stat-badge tone-neutral" style="display:none;"><span id="statOverdue">0</span> เกินกำหนด</span>
           </div>
         </div>
       </div>
 
-      <!-- Category breakdown -->
-      <div class="bg-white p-4 md:p-5 rounded-xl shadow-sm">
-        <h3 class="section-title">📦 สรุปตามหมวดหมู่</h3>
-        <div id="catBreakdown">
-          <!-- Rows injected -->
+      <div class="hidden">
+        <span id="statValue">0 บ.</span>
+        <span id="statBroken">0</span>
+        <span id="statRepair">0</span>
+        <span id="statBorrowed">0</span>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div class="dashboard-card p-5 xl:col-span-1">
+          <h3 class="font-extrabold text-lg mb-4">ครุภัณฑ์แยกตามสถานะ</h3>
+          <div class="flex items-center gap-6 flex-wrap">
+            <div class="donut-chart" id="statusDonut">
+              <div class="donut-center">
+                <div>
+                  <div class="text-3xl font-extrabold" id="donutTotal">0</div>
+                  <div class="text-xs text-gray-500">รายการ</div>
+                </div>
+              </div>
+            </div>
+            <div id="statusLegend" class="flex-1 min-w-[190px] space-y-3"></div>
+          </div>
+        </div>
+
+        <div class="dashboard-card p-5 xl:col-span-1">
+          <h3 class="font-extrabold text-lg mb-4">แยกตามหมวดหมู่</h3>
+          <div id="catBreakdown"></div>
+        </div>
+
+        <div class="dashboard-card p-5 xl:col-span-1">
+          <div class="flex items-center justify-between mb-4 gap-3">
+            <h3 class="font-extrabold text-lg">ค่าใช้จ่ายงานซ่อม</h3>
+            <button class="range-chip active !h-9 !px-3">เดือนนี้</button>
+          </div>
+          <div class="grid grid-cols-3 gap-3 text-sm mb-4">
+            <div class="rounded-lg border bg-gray-50 p-3"><div class="text-gray-400 text-xs">รวม</div><b id="repairCostTotal">฿0</b></div>
+            <div class="rounded-lg border bg-gray-50 p-3"><div class="text-gray-400 text-xs">งานซ่อม</div><b id="repairJobCount">0</b></div>
+            <div class="rounded-lg border bg-gray-50 p-3"><div class="text-gray-400 text-xs">เฉลี่ย</div><b>฿0</b></div>
+          </div>
+          <div class="h-36 flex items-end gap-4 px-2 border-b border-gray-100" id="repairMiniChart"></div>
         </div>
       </div>
 
-      <div class="bg-white p-4 rounded-xl shadow-sm flex flex-col md:flex-row gap-3">
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div class="dashboard-card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-extrabold text-lg">ต้องตรวจเร็ว ๆ นี้</h3>
+            <button onclick="filterOverdueAssets()" class="text-sm" style="color:#4338ca;">ดูทั้งหมด</button>
+          </div>
+          <div id="dueSoonList"></div>
+        </div>
+        <div class="dashboard-card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-extrabold text-lg">งานซ่อมที่ยังไม่เสร็จ</h3>
+            <button onclick="filterRepairAssets()" class="text-sm" style="color:#4338ca;">ดูทั้งหมด</button>
+          </div>
+          <div id="repairList"></div>
+        </div>
+      </div>
+
+      <div class="dashboard-card p-4 flex flex-col md:flex-row gap-3">
         <div class="relative flex-1">
           <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-          <input type="text" id="searchInput" placeholder="ค้นหาชื่อ, รหัส, สถานที่..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-blue-500 outline-none" onkeyup="filterAssets()">
+          <input type="text" id="searchInput" placeholder="ค้นหาชื่อ, รหัส, สถานที่..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-blue-500 outline-none" onkeyup="filterAssets(); syncGlobalSearch();">
         </div>
         <select id="catFilter" class="border rounded-lg px-4 py-2 bg-white" onchange="filterAssets()">
           <option value="">ทุกหมวดหมู่</option>
@@ -1297,6 +1561,19 @@
     let allAssets = [];
     let currentViewAsset = null;
 
+    function escapeHtml(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function jsString(value) {
+      return JSON.stringify(String(value === null || value === undefined ? '' : value));
+    }
+
     const CATEGORY_LABELS = {
       electrical: 'ไฟฟ้า/อิเล็กทรอนิกส์', furniture: 'เฟอร์นิเจอร์', it: 'ไอที/เครือข่าย',
       cleaning: 'ทำความสะอาด', sports: 'กีฬา', kitchen: 'เครื่องครัว', others: 'อื่นๆ'
@@ -1397,12 +1674,15 @@
       document.getElementById('tab-add').classList.remove('nav-active', 'text-gray-500');
       document.getElementById('bnav-dashboard').classList.remove('active');
       document.getElementById('bnav-add').classList.remove('active');
+      document.querySelectorAll('.side-link').forEach(el => el.classList.remove('active'));
 
       if(tab === 'dashboard') {
         document.getElementById('view-dashboard').classList.remove('hidden');
         document.getElementById('tab-dashboard').classList.add('nav-active');
         document.getElementById('tab-add').classList.add('text-gray-500');
         document.getElementById('bnav-dashboard').classList.add('active');
+        const sideDashboard = document.getElementById('sideDashboard');
+        if (sideDashboard) sideDashboard.classList.add('active');
       } else {
         document.getElementById('view-add').classList.remove('hidden');
         document.getElementById('tab-add').classList.add('nav-active');
@@ -1418,6 +1698,81 @@
       } else {
         switchTab('dashboard');
       }
+    }
+
+    function syncGlobalSearch() {
+      const source = document.getElementById('searchInput');
+      const target = document.getElementById('globalSearchInput');
+      if (source && target && source.value !== target.value) target.value = source.value;
+    }
+
+    function setDashboardSearch(value) {
+      switchTab('dashboard');
+      const search = document.getElementById('searchInput');
+      if (search) search.value = value;
+      filterAssets();
+    }
+
+    function focusDashboardSearch(value) {
+      switchTab('dashboard');
+      const search = document.getElementById('searchInput');
+      if (search && value !== undefined) search.value = value;
+      if (search) search.focus();
+      filterAssets();
+    }
+
+    function focusCategoryFilter() {
+      switchTab('dashboard');
+      const cat = document.getElementById('catFilter');
+      if (cat) cat.focus();
+    }
+
+    function filterRepairAssets() {
+      switchTab('dashboard');
+      document.getElementById('statusFilter').value = 'ส่งซ่อม';
+      document.getElementById('catFilter').value = '';
+      document.getElementById('searchInput').value = '';
+      syncGlobalSearch();
+      filterAssets();
+      scrollToList();
+    }
+
+    function filterOverdueAssets() {
+      switchTab('dashboard');
+      const todayStr = new Date().toISOString().slice(0, 10);
+      document.getElementById('statusFilter').value = 'ถูกยืมอยู่';
+      document.getElementById('catFilter').value = '';
+      document.getElementById('searchInput').value = '';
+      syncGlobalSearch();
+      const filtered = allAssets.filter(a => a.status === 'ถูกยืมอยู่' && a.dueDate && a.dueDate < todayStr);
+      document.getElementById('resultCount').innerText = `แสดง ${filtered.length} จาก ${allAssets.length} รายการ`;
+      lastFilteredAssets = filtered;
+      renderAssets(filtered);
+      scrollToList();
+    }
+
+    function openQrPrintPanel() {
+      switchTab('dashboard');
+      Swal.fire('พิมพ์ QR / การ์ด', 'เลือกรายการจากทะเบียนครุภัณฑ์ แล้วกดพิมพ์จากแถบด้านล่าง หรือเปิดตั้งค่าป้าย QR ได้ทันที', 'info');
+      openQrSettingsModal();
+    }
+
+    function openScanPrompt() {
+      Swal.fire({
+        title: 'สแกน QR / เปิดรหัสครุภัณฑ์',
+        input: 'text',
+        inputPlaceholder: 'วางหรือกรอกรหัสครุภัณฑ์',
+        showCancelButton: true,
+        confirmButtonText: 'เปิดข้อมูล',
+        cancelButtonText: 'ยกเลิก'
+      }).then(result => {
+        const id = (result.value || '').trim();
+        if (result.isConfirmed && id) openAssetDetailModal(id);
+      });
+    }
+
+    function showPlannedMenu(label) {
+      Swal.fire(label, 'เมนูนี้เพิ่มไว้ใน UI แล้ว และสามารถต่อยอดเป็นหน้าจัดการข้อมูลตั้งต้นได้โดยไม่กระทบงานเดิม', 'info');
     }
 
     // Clicking an item in the dashboard list opens its details as an in-page
@@ -1594,9 +1949,12 @@
       const mLoginBtn = document.getElementById('mNavLoginBtn');
       const mName = document.getElementById('mSessionName');
       const nameEl = document.getElementById('sessionName');
+      const sideName = document.getElementById('sideSessionName');
+      const sideRole = document.getElementById('sideSessionRole');
       const adminIds = ['dNavStaffManage', 'dNavSettings', 'dNavReports', 'dNavReportDoc',
                         'mNavStaffManage', 'mNavSettings', 'mNavReports', 'mNavReportDoc',
-                        'tNavStaffManage', 'tNavSettings', 'tNavReports', 'tNavReportDoc'];
+                        'tNavStaffManage', 'tNavSettings', 'tNavReports', 'tNavReportDoc',
+                        'sNavStaffManage', 'sNavSettings', 'sNavReports', 'sNavReportDoc'];
       const adminBtns = adminIds.map(id => document.getElementById(id)).filter(Boolean);
       if (session) {
         loginBtn.classList.add('hidden');
@@ -1606,11 +1964,15 @@
         const full = session.displayName + ' (' + roleLabel + ')';
         if (nameEl) nameEl.innerText = full;
         if (mName) mName.innerText = full;
+        if (sideName) sideName.innerText = session.displayName || session.username;
+        if (sideRole) sideRole.innerText = roleLabel;
         adminBtns.forEach(b => b.classList.toggle('hidden', session.role !== 'admin'));
       } else {
         loginBtn.classList.remove('hidden');
         if (userWrap) userWrap.classList.add('hidden');
         if (mLoginBtn) mLoginBtn.classList.remove('hidden');
+        if (sideName) sideName.innerText = 'ยังไม่ได้เข้าสู่ระบบ';
+        if (sideRole) sideRole.innerText = 'Guest';
         adminBtns.forEach(b => b.classList.add('hidden'));
       }
     }
@@ -1784,8 +2146,8 @@
         fundingSources = await callServer('getFundingSources', {});
         container.innerHTML = fundingSources.map(f => `
           <div class="flex items-center justify-between text-sm border rounded-lg px-3 py-2">
-            <span>${f.name}</span>
-            <button onclick="toggleFundingSourceStatus('${f.name.replace(/'/g, "\\'")}', '${f.status}')" class="text-xs px-3 py-1.5 rounded-full ${f.status === 'active' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">
+            <span>${escapeHtml(f.name)}</span>
+            <button onclick="toggleFundingSourceStatus(${jsString(f.name)}, ${jsString(f.status)})" class="text-xs px-3 py-1.5 rounded-full ${f.status === 'active' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">
               ${f.status === 'active' ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
             </button>
           </div>
@@ -1873,16 +2235,16 @@
         const rows = await callServer('getFullHistory', {});
         body.innerHTML = rows.map(r => `
           <tr class="border-b">
-            <td class="py-1.5 pr-2 whitespace-nowrap text-gray-500">${r.timestamp || ''}</td>
-            <td class="py-1.5 pr-2 whitespace-nowrap font-semibold" style="color:var(--teal-dark)">${r.inventoryId || ''}</td>
-            <td class="py-1.5 pr-2 max-w-[160px] truncate" title="${r.itemName || ''}">${r.itemName || ''}</td>
-            <td class="py-1.5 pr-2 whitespace-nowrap">${r.actionType || ''}</td>
-            <td class="py-1.5 pr-2 whitespace-nowrap">${r.actionBy || ''}</td>
-            <td class="py-1.5 pr-2 max-w-[180px] truncate" title="${r.actionNote || ''}">${r.actionNote || ''}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap text-gray-500">${escapeHtml(r.timestamp)}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap font-semibold" style="color:var(--teal-dark)">${escapeHtml(r.inventoryId)}</td>
+            <td class="py-1.5 pr-2 max-w-[160px] truncate" title="${escapeHtml(r.itemName)}">${escapeHtml(r.itemName)}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap">${escapeHtml(r.actionType)}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap">${escapeHtml(r.actionBy)}</td>
+            <td class="py-1.5 pr-2 max-w-[180px] truncate" title="${escapeHtml(r.actionNote)}">${escapeHtml(r.actionNote)}</td>
           </tr>
         `).join('') || '<tr><td colspan="6" class="text-center text-gray-400 py-4">ยังไม่มีประวัติ</td></tr>';
       } catch (err) {
-        body.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 py-4">${err.message}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 py-4">${escapeHtml(err.message)}</td></tr>`;
       }
     }
 
@@ -1893,15 +2255,15 @@
         const rows = await callServer('getErrorLog', {});
         body.innerHTML = rows.map(r => `
           <tr class="border-b">
-            <td class="py-1.5 pr-2 whitespace-nowrap text-gray-500">${r.timestamp || ''}</td>
-            <td class="py-1.5 pr-2 whitespace-nowrap">${r.source || ''}</td>
-            <td class="py-1.5 pr-2 whitespace-nowrap">${r.context || ''}</td>
-            <td class="py-1.5 pr-2 max-w-[220px] truncate" title="${r.message || ''}">${r.message || ''}</td>
-            <td class="py-1.5 pr-2 whitespace-nowrap">${r.username || '-'}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap text-gray-500">${escapeHtml(r.timestamp)}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap">${escapeHtml(r.source)}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap">${escapeHtml(r.context)}</td>
+            <td class="py-1.5 pr-2 max-w-[220px] truncate" title="${escapeHtml(r.message)}">${escapeHtml(r.message)}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap">${escapeHtml(r.username || '-')}</td>
           </tr>
         `).join('') || '<tr><td colspan="5" class="text-center text-gray-400 py-4">ยังไม่มีบันทึกข้อผิดพลาด</td></tr>';
       } catch (err) {
-        body.innerHTML = `<tr><td colspan="5" class="text-center text-red-500 py-4">${err.message}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="5" class="text-center text-red-500 py-4">${escapeHtml(err.message)}</td></tr>`;
       }
     }
 
@@ -1914,16 +2276,16 @@
           const ok = r.result === 'success';
           return `
           <tr class="border-b">
-            <td class="py-1.5 pr-2 whitespace-nowrap text-gray-500">${r.timestamp || ''}</td>
-            <td class="py-1.5 pr-2 whitespace-nowrap font-semibold" style="color:var(--teal-dark)">${r.username || ''}</td>
-            <td class="py-1.5 pr-2 whitespace-nowrap">${r.displayName || ''}</td>
-            <td class="py-1.5 pr-2 whitespace-nowrap">${r.role || ''}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap text-gray-500">${escapeHtml(r.timestamp)}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap font-semibold" style="color:var(--teal-dark)">${escapeHtml(r.username)}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap">${escapeHtml(r.displayName)}</td>
+            <td class="py-1.5 pr-2 whitespace-nowrap">${escapeHtml(r.role)}</td>
             <td class="py-1.5 pr-2 whitespace-nowrap"><span class="badge ${ok ? 'tone-neutral' : 'tone-error'}" style="${ok ? 'color:var(--teal-dark); background:var(--teal-bg);' : 'color:#b91c1c; background:#fee2e2;'}">${ok ? 'สำเร็จ' : 'ล้มเหลว'}</span></td>
-            <td class="py-1.5 pr-2 max-w-[200px] truncate" title="${r.detail || ''}">${r.detail || '-'}</td>
+            <td class="py-1.5 pr-2 max-w-[200px] truncate" title="${escapeHtml(r.detail)}">${escapeHtml(r.detail || '-')}</td>
           </tr>`;
         }).join('') || '<tr><td colspan="6" class="text-center text-gray-400 py-4">ยังไม่มีประวัติการเข้าสู่ระบบ</td></tr>';
       } catch (err) {
-        body.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 py-4">${err.message}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 py-4">${escapeHtml(err.message)}</td></tr>`;
       }
     }
 
@@ -1941,7 +2303,7 @@
       const names = fundingSources.filter(f => f.status === 'active').map(f => f.name);
       if (currentValue && !names.includes(currentValue)) names.unshift(currentValue);
       selectEl.innerHTML = '<option value="">-- ไม่ระบุ --</option>' +
-        names.map(n => `<option value="${n}" ${n === currentValue ? 'selected' : ''}>${n}</option>`).join('') +
+        names.map(n => `<option value="${escapeHtml(n)}" ${n === currentValue ? 'selected' : ''}>${escapeHtml(n)}</option>`).join('') +
         '<option value="__other__">อื่นๆ (ระบุเอง)</option>';
       toggleMoneyOtherInput(selectEl);
     }
@@ -1993,8 +2355,8 @@
       lines.forEach((line, i) => {
         const sep = line.includes('\t') ? '\t' : (line.includes(';') ? ';' : ',');
         const cols = line.split(sep).map(c => c.trim());
-        const [itemName, category, quantity, unit, price, sourceOfMoney,
-               location, purchaseDate, buyerName, installer, note, description, inventoryId] = cols;
+        const [itemName, category, quantity, price, sourceOfMoney,
+               location, purchaseDate, buyerName, installer, note, description, inventoryId, unit] = cols;
         if (!itemName) { errors.push('แถวที่ ' + (i + 1) + ': ขาดชื่อรายการ — ข้าม'); return; }
         let cat = (category || 'others').trim();
         if (catByLabel[cat]) cat = catByLabel[cat];
@@ -2017,7 +2379,7 @@
     async function submitBulkImport() {
       const { items, errors } = parseBulkInput();
       document.getElementById('bulkErrors').innerHTML =
-        errors.map(e => `<div class="text-red-600 text-xs">• ${e}</div>`).join('');
+        errors.map(e => `<div class="text-red-600 text-xs">• ${escapeHtml(e)}</div>`).join('');
       if (!items.length) { Swal.fire('ไม่มีข้อมูล', 'กรอกข้อมูลอย่างน้อย 1 แถว (ดูตัวอย่างได้)', 'warning'); return; }
       showLoading(true);
       try {
@@ -2093,8 +2455,7 @@
     }
     function buildReportDocHtml() {
       const s = getRDSettings();
-      const esc = v => String(v === null || v === undefined ? '' : v)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const esc = escapeHtml;
       const org = document.getElementById('rdOrgName').value.trim() || 'มูลนิธิ RDF';
       const title = document.getElementById('rdTitle').value.trim() || 'รายงานสรุปครุภัณฑ์';
       const docNo = document.getElementById('rdDocNo').value.trim();
@@ -2370,8 +2731,7 @@
     function exportReportDocExcel() {
       const s = getRDSettings();
       if (!s.rows.length) { Swal.fire('ไม่มีข้อมูล', 'ไม่มีรายการในช่วงวันที่นี้', 'info'); return; }
-      const esc = v => String(v === null || v === undefined ? '' : v)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const esc = escapeHtml;
       const docDate = document.getElementById('rdDocDate').value.trim() || formatThaiDate(new Date().toISOString().slice(0, 10));
       let body = `<table border="1"><tr><td colspan="5"><b>${esc(document.getElementById('rdOrgName').value.trim() || 'มูลนิธิ RDF')}</b></td></tr>
         <tr><td colspan="5"><b>${esc(document.getElementById('rdTitle').value.trim() || 'รายงานสรุปครุภัณฑ์')}</b></td></tr>
@@ -2410,10 +2770,10 @@
         container.innerHTML = list.map(s => `
           <div class="flex items-center justify-between text-sm border rounded-lg px-3 py-2">
             <div>
-              <div class="font-semibold">${s.displayName} <span class="text-gray-400 font-normal">(${s.username})</span></div>
-              <div class="text-xs text-gray-500">${s.role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่'} · ${s.status === 'active' ? 'ใช้งานอยู่' : 'ปิดใช้งาน'}${s.email ? ' · ' + s.email : ''}</div>
+              <div class="font-semibold">${escapeHtml(s.displayName)} <span class="text-gray-400 font-normal">(${escapeHtml(s.username)})</span></div>
+              <div class="text-xs text-gray-500">${s.role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่'} · ${s.status === 'active' ? 'ใช้งานอยู่' : 'ปิดใช้งาน'}${s.email ? ' · ' + escapeHtml(s.email) : ''}</div>
             </div>
-            <button onclick="toggleStaffStatus('${s.username}', '${s.status}')" class="text-xs px-3 py-1.5 rounded-full ${s.status === 'active' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">
+            <button onclick="toggleStaffStatus(${jsString(s.username)}, ${jsString(s.status)})" class="text-xs px-3 py-1.5 rounded-full ${s.status === 'active' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">
               ${s.status === 'active' ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
             </button>
           </div>
@@ -2636,9 +2996,110 @@
       document.getElementById('statRepair').innerText = counts['ส่งซ่อม'];
       document.getElementById('statBorrowed').innerText = counts['ถูกยืมอยู่'];
       document.getElementById('statOverdue').innerText = overdue;
+      document.getElementById('statOverdueTile').innerText = overdue;
+      document.getElementById('statMaintenance').innerText = counts['ชำรุด'] + counts['ส่งซ่อม'];
+      document.getElementById('donutTotal').innerText = assets.length.toLocaleString();
       const badge = document.getElementById('statOverdueBadge');
       badge.style.display = overdue > 0 ? 'inline-block' : 'none';
       badge.className = 'stat-badge ' + (overdue > 0 ? 'tone-error' : 'tone-neutral');
+      updateSidebarBadges(overdue, counts['ชำรุด'] + counts['ส่งซ่อม']);
+      renderStatusDonut(assets.length, counts, overdue);
+      renderDashboardWorkLists(assets, overdue, counts['ชำรุด'] + counts['ส่งซ่อม']);
+    }
+
+    function updateSidebarBadges(overdue, repairCount) {
+      const overdueBadge = document.getElementById('sideOverdueBadge');
+      const repairBadge = document.getElementById('sideRepairBadge');
+      if (overdueBadge) {
+        overdueBadge.textContent = overdue;
+        overdueBadge.classList.toggle('hidden', overdue === 0);
+      }
+      if (repairBadge) {
+        repairBadge.textContent = repairCount;
+        repairBadge.classList.toggle('hidden', repairCount === 0);
+      }
+    }
+
+    function renderStatusDonut(total, counts, overdue) {
+      const donut = document.getElementById('statusDonut');
+      const legend = document.getElementById('statusLegend');
+      if (!donut || !legend) return;
+      const ok = counts['ใช้งานได้'] || 0;
+      const broken = counts['ชำรุด'] || 0;
+      const repair = counts['ส่งซ่อม'] || 0;
+      const borrowed = counts['ถูกยืมอยู่'] || 0;
+      const disposed = Math.max(total - ok - broken - repair - borrowed, 0);
+      const denom = Math.max(total, 1);
+      const p1 = (ok / denom) * 100;
+      const p2 = p1 + (broken / denom) * 100;
+      const p3 = p2 + (repair / denom) * 100;
+      const p4 = p3 + (borrowed / denom) * 100;
+      donut.style.background = `conic-gradient(#4f46e5 0 ${p1}%, #dc2626 ${p1}% ${p2}%, #d97706 ${p2}% ${p3}%, #0891b2 ${p3}% ${p4}%, #7c3aed ${p4}% 100%)`;
+      const rows = [
+        ['ใช้งานปกติ', ok, '#4f46e5', "filterByStatus('ใช้งานได้')"],
+        ['ชำรุด', broken, '#dc2626', "filterByStatus('ชำรุด')"],
+        ['รอซ่อม', repair, '#d97706', "filterByStatus('ส่งซ่อม')"],
+        ['กำลังยืม', borrowed, '#0891b2', "filterByStatus('ถูกยืมอยู่')"],
+        ['อื่น/ยุติใช้งาน', disposed, '#7c3aed', 'clearFilters()']
+      ];
+      legend.innerHTML = rows.map(r => `
+        <button class="w-full flex items-center gap-3 text-sm" onclick="${r[3]}">
+          <span class="w-2.5 h-2.5 rounded-full" style="background:${r[2]}"></span>
+          <span class="flex-1 text-left text-gray-600">${r[0]}</span>
+          <b>${r[1].toLocaleString()}</b>
+        </button>
+      `).join('');
+    }
+
+    function renderDashboardWorkLists(assets, overdueCount, repairCount) {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const dueRows = assets
+        .filter(a => a.status === 'ถูกยืมอยู่' && a.dueDate)
+        .sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate)))
+        .slice(0, 4);
+      const repairRows = assets
+        .filter(a => a.status === 'ส่งซ่อม' || a.status === 'ชำรุด')
+        .slice(0, 4);
+
+      const dueWrap = document.getElementById('dueSoonList');
+      if (dueWrap) {
+        dueWrap.innerHTML = dueRows.length ? dueRows.map(a => {
+          const overdue = a.dueDate < todayStr;
+          return `
+            <button class="dashboard-list-row w-full text-left" onclick="openAssetDetailModal(${jsString(a.inventoryId)})">
+              <span class="text-xs px-2 py-1 rounded bg-indigo-50 text-indigo-700">${escapeHtml(a.inventoryId)}</span>
+              <span class="flex-1 min-w-0"><b class="block truncate">${escapeHtml(a.itemName)}</b><span class="text-xs text-gray-400">ครบกำหนด ${escapeHtml(formatThaiDate(a.dueDate))}</span></span>
+              <span class="badge ${overdue ? 'tone-coral' : 'tone-sky'}">${overdue ? 'เกินกำหนด' : 'รอตรวจ'}</span>
+            </button>
+          `;
+        }).join('') : '<p class="text-sm text-gray-400 py-6 text-center">ยังไม่มีรายการต้องตรวจ</p>';
+      }
+
+      const repairWrap = document.getElementById('repairList');
+      if (repairWrap) {
+        repairWrap.innerHTML = repairRows.length ? repairRows.map(a => `
+          <button class="dashboard-list-row w-full text-left" onclick="openAssetDetailModal(${jsString(a.inventoryId)})">
+            <span class="flex-1 min-w-0"><b class="block truncate">${escapeHtml(a.itemName)}</b><span class="text-xs text-gray-400">${escapeHtml(a.inventoryId)} · ${escapeHtml(a.location || '-')}</span></span>
+            <span class="badge ${a.status === 'ส่งซ่อม' ? 'tone-gold' : 'tone-coral'}">${escapeHtml(a.status)}</span>
+          </button>
+        `).join('') : '<p class="text-sm text-gray-400 py-6 text-center">ยังไม่มีงานซ่อมค้าง</p>';
+      }
+
+      const costTotal = document.getElementById('repairCostTotal');
+      const jobCount = document.getElementById('repairJobCount');
+      if (costTotal) costTotal.textContent = '฿0';
+      if (jobCount) jobCount.textContent = repairCount.toLocaleString();
+      const chart = document.getElementById('repairMiniChart');
+      if (chart) {
+        const bars = [overdueCount, repairCount, Math.max(repairCount - overdueCount, 0), repairRows.length, assets.length ? Math.ceil((repairCount / assets.length) * 10) : 0];
+        const max = Math.max(...bars, 1);
+        chart.innerHTML = bars.map((v, i) => `
+          <div class="flex-1 flex flex-col items-center justify-end gap-2 h-full">
+            <div class="w-full max-w-[28px] rounded-t" style="height:${Math.max((v / max) * 100, 6)}%; background:${i === 1 ? '#4f46e5' : '#e5e7eb'}"></div>
+            <span class="text-[10px] text-gray-400">สัปดาห์ ${i + 1}</span>
+          </div>
+        `).join('');
+      }
     }
 
     function renderCategoryBreakdown(assets) {
@@ -2663,7 +3124,7 @@
         const icon = CATEGORY_ICONS[r.key] || 'fa-box';
         const pct = maxCount > 0 ? Math.max((r.count / maxCount) * 100, 4) : 0;
         return `
-          <div class="cat-row" onclick="filterByCategory('${r.key}')" title="ดูเฉพาะหมวดนี้">
+          <div class="cat-row" onclick="filterByCategory(${jsString(r.key)})" title="ดูเฉพาะหมวดนี้">
             <span class="cat-label"><i class="fas ${icon} text-gray-400 w-4"></i> ${label}</span>
             <div class="cat-track"><div class="cat-fill" style="width:${pct}%"></div></div>
             <span class="cat-value">${r.count}</span>
@@ -2702,10 +3163,10 @@
         const pct = Math.max((r.value / maxValue) * 100, 4);
         // "ไม่ระบุ" (unspecified) doesn't correspond to a real searchable value
         // (the underlying field is just empty) — leave those rows unclickable.
-        const clickAttr = (onClickFn && r.key !== 'ไม่ระบุ') ? `onclick="${onClickFn}('${r.key.replace(/'/g, "\\'")}'); closeValueBreakdownModal();" title="ดูเฉพาะรายการนี้"` : '';
+        const clickAttr = (onClickFn && r.key !== 'ไม่ระบุ') ? `onclick="${onClickFn}(${jsString(r.key)}); closeValueBreakdownModal();" title="ดูเฉพาะรายการนี้"` : '';
         return `
           <div class="cat-row" ${clickAttr}>
-            <span class="cat-label">${labelFn(r.key)}</span>
+            <span class="cat-label">${escapeHtml(labelFn(r.key))}</span>
             <div class="cat-track"><div class="cat-fill" style="width:${pct}%"></div></div>
             <span class="cat-value text-xs">${r.value.toLocaleString()} บ. <span class="text-gray-400">(${r.count})</span></span>
           </div>
@@ -2828,23 +3289,25 @@
         const isOverdue = a.status === 'ถูกยืมอยู่' && a.dueDate && a.dueDate < todayStr;
         const checked = selectedIds.has(a.inventoryId) ? 'checked' : '';
         const icon = CATEGORY_ICONS[a.category] || 'fa-box';
+        const idJs = jsString(a.inventoryId);
+        const idUrl = encodeURIComponent(a.inventoryId || '');
         const thumb = a.image
-          ? `<img src="${a.image}" alt="">`
+          ? `<img src="${escapeHtml(a.image)}" alt="">`
           : `<i class="fas ${icon}"></i>`;
         html += `
           <div class="card-asset accent-${tone}">
-            <input type="checkbox" class="asset-chk flex-shrink-0" data-id="${a.inventoryId}" ${checked} onchange="toggleAssetChk(this)">
+            <input type="checkbox" class="asset-chk flex-shrink-0" data-id="${escapeHtml(a.inventoryId)}" ${checked} onchange="toggleAssetChk(this)">
             <div class="card-thumb">${thumb}</div>
-            <a href="${WEBAPP_URL}?action=viewItem&id=${a.inventoryId}" onclick="event.preventDefault(); openAssetDetailModal('${a.inventoryId}')" class="flex-1 min-w-0">
-              <div class="font-bold text-sm truncate" style="color:var(--teal-dark)">${a.inventoryId}</div>
-              <div class="text-sm text-gray-800 truncate">${a.itemName}</div>
-              <div class="text-xs text-gray-500 truncate">${a.location || ''}</div>
+            <a href="${WEBAPP_URL}?action=viewItem&id=${idUrl}" onclick="event.preventDefault(); openAssetDetailModal(${idJs})" class="flex-1 min-w-0">
+              <div class="font-bold text-sm truncate" style="color:var(--teal-dark)">${escapeHtml(a.inventoryId)}</div>
+              <div class="text-sm text-gray-800 truncate">${escapeHtml(a.itemName)}</div>
+              <div class="text-xs text-gray-500 truncate">${escapeHtml(a.location || '')}</div>
             </a>
             <div class="flex flex-col items-end gap-1 flex-shrink-0">
-              <span class="badge tone-${tone}">${a.status}</span>
+              <span class="badge tone-${tone}">${escapeHtml(a.status)}</span>
               ${isOverdue ? `<span class="text-[10px] font-bold" style="color:var(--error)">เกินกำหนดคืน</span>` : ''}
             </div>
-            <button onclick="showQrPreview('${a.inventoryId}')" class="text-gray-400 hover-brand flex-shrink-0" title="ดู QR"><i class="fas fa-qrcode text-lg"></i></button>
+            <button onclick="showQrPreview(${idJs})" class="text-gray-400 hover-brand flex-shrink-0" title="ดู QR"><i class="fas fa-qrcode text-lg"></i></button>
           </div>
         `;
       });
@@ -2857,22 +3320,24 @@
         const tone = getStatusTone(a.status);
         const isOverdue = a.status === 'ถูกยืมอยู่' && a.dueDate && a.dueDate < todayStr;
         const checked = selectedIds.has(a.inventoryId) ? 'checked' : '';
+        const idJs = jsString(a.inventoryId);
+        const idUrl = encodeURIComponent(a.inventoryId || '');
         return `
           <tr class="border-b hover:bg-gray-50">
-            <td class="py-2 pr-2"><input type="checkbox" class="asset-chk" data-id="${a.inventoryId}" ${checked} onchange="toggleAssetChk(this)"></td>
+            <td class="py-2 pr-2"><input type="checkbox" class="asset-chk" data-id="${escapeHtml(a.inventoryId)}" ${checked} onchange="toggleAssetChk(this)"></td>
             <td class="py-2 pr-3 whitespace-nowrap">
-              <a href="${WEBAPP_URL}?action=viewItem&id=${a.inventoryId}" onclick="event.preventDefault(); openAssetDetailModal('${a.inventoryId}')" class="font-semibold hover:underline" style="color:var(--teal-dark)">${a.inventoryId}</a>
+              <a href="${WEBAPP_URL}?action=viewItem&id=${idUrl}" onclick="event.preventDefault(); openAssetDetailModal(${idJs})" class="font-semibold hover:underline" style="color:var(--teal-dark)">${escapeHtml(a.inventoryId)}</a>
             </td>
-            <td class="py-2 pr-3 max-w-[220px] truncate" title="${a.itemName}">${a.itemName}</td>
-            <td class="py-2 pr-3 whitespace-nowrap text-gray-600">${CATEGORY_LABELS[a.category] || a.category || '-'}</td>
+            <td class="py-2 pr-3 max-w-[220px] truncate" title="${escapeHtml(a.itemName)}">${escapeHtml(a.itemName)}</td>
+            <td class="py-2 pr-3 whitespace-nowrap text-gray-600">${escapeHtml(CATEGORY_LABELS[a.category] || a.category || '-')}</td>
             <td class="py-2 pr-3 whitespace-nowrap">
-              <span class="badge tone-${tone}">${a.status}</span>
+              <span class="badge tone-${tone}">${escapeHtml(a.status)}</span>
               ${isOverdue ? `<div class="text-[10px] font-bold mt-0.5" style="color:var(--error)">เกินกำหนดคืน</div>` : ''}
             </td>
-            <td class="py-2 pr-3 max-w-[160px] truncate text-gray-600" title="${a.location || ''}">${a.location || '-'}</td>
+            <td class="py-2 pr-3 max-w-[160px] truncate text-gray-600" title="${escapeHtml(a.location || '')}">${escapeHtml(a.location || '-')}</td>
             <td class="py-2 pr-3 text-right whitespace-nowrap">${a.price ? parseFloat(a.price).toLocaleString() + ' บ.' : '-'}</td>
             <td class="py-2 pl-1 text-right">
-              <button onclick="showQrPreview('${a.inventoryId}')" class="text-gray-400 hover-brand" title="ดู QR"><i class="fas fa-qrcode"></i></button>
+              <button onclick="showQrPreview(${idJs})" class="text-gray-400 hover-brand" title="ดู QR"><i class="fas fa-qrcode"></i></button>
             </td>
           </tr>
         `;
@@ -2940,11 +3405,11 @@
       const rowsHtml = rows.map((a, i) => `
         <tr>
           <td style="${cell}">${i + 1}</td>
-          <td style="${cell}">${a.inventoryId || ''}</td>
-          <td style="${cell}">${a.itemName || ''}</td>
-          <td style="${cell}">${CATEGORY_LABELS[a.category] || a.category || ''}</td>
-          <td style="${cell}">${a.status || ''}</td>
-          <td style="${cell}">${a.location || '-'}</td>
+          <td style="${cell}">${escapeHtml(a.inventoryId || '')}</td>
+          <td style="${cell}">${escapeHtml(a.itemName || '')}</td>
+          <td style="${cell}">${escapeHtml(CATEGORY_LABELS[a.category] || a.category || '')}</td>
+          <td style="${cell}">${escapeHtml(a.status || '')}</td>
+          <td style="${cell}">${escapeHtml(a.location || '-')}</td>
           <td style="${cell} text-align:right">${a.price ? parseFloat(a.price).toLocaleString() : '0'}</td>
         </tr>
       `).join('');
@@ -3008,11 +3473,11 @@
         const value = formatQrFieldValue(a, key);
         if (!value) return '';
         const cls = i === 0 ? 'pl-name' : (i === 1 ? 'pl-id' : 'pl-loc');
-        return `<p class="${cls}">${value}</p>`;
+        return `<p class="${cls}">${escapeHtml(value)}</p>`;
       }).join('');
       return `
         <div class="print-label">
-          <img src="${a.qrcode}">
+          <img src="${escapeHtml(a.qrcode)}">
           <div class="pl-text">${lines}</div>
         </div>
       `;
@@ -3035,7 +3500,7 @@
         if (!value) return '';
         const def = QR_FIELD_DEFS.find(f => f.key === key);
         const label = def ? def.label : key;
-        return `<p class="text-sm flex justify-between gap-3"><span class="text-gray-500">${label}</span><span class="font-semibold text-right">${value}</span></p>`;
+        return `<p class="text-sm flex justify-between gap-3"><span class="text-gray-500">${escapeHtml(label)}</span><span class="font-semibold text-right">${escapeHtml(value)}</span></p>`;
       }).join('');
 
       document.getElementById('qrPreviewImg').src = a.qrcode;
@@ -3245,7 +3710,8 @@
     // ========== VIEW ITEM ==========
     function loadAssetById(id) {
       showLoading(true);
-      callApi('getAssetById', { id: id }, true)
+      const session = currentSession || loadCachedSession();
+      callApi('getAssetById', session ? { id: id, token: session.token } : { id: id }, !session)
         .then(asset => {
           showLoading(false);
           currentViewAsset = asset;
@@ -3308,7 +3774,7 @@
       let imgHtml = '';
       [a.image, a.image2, a.receipt, a.receipt2, a.receipt3, a.receipt4].forEach((url, i) => {
         if (url && url.trim() !== '') {
-          imgHtml += `<img src="${url}" onclick="openImageLightbox('${url}')" class="w-full h-32 object-cover rounded border hover:opacity-80 cursor-pointer">`;
+          imgHtml += `<img src="${escapeHtml(url)}" onclick="openImageLightbox(${jsString(url)})" class="w-full h-32 object-cover rounded border hover:opacity-80 cursor-pointer">`;
         }
       });
       imgContainer.innerHTML = imgHtml;
@@ -3322,11 +3788,11 @@
           hHtml += `
             <li class="p-3 rounded border-l-4" style="background:var(--teal-bg); border-color:var(--teal);">
               <div class="flex justify-between text-xs text-gray-500 mb-1">
-                <span>${l.timestamp}</span>
-                <span class="font-bold text-gray-700">${l.actionBy || 'ระบบ'}</span>
+                <span>${escapeHtml(l.timestamp)}</span>
+                <span class="font-bold text-gray-700">${escapeHtml(l.actionBy || 'ระบบ')}</span>
               </div>
-              <p class="font-semibold">${l.actionType} ${l.newStatus ? `(${l.newStatus})` : ''}</p>
-              ${l.note ? `<p class="text-gray-600 text-xs mt-1">หมายเหตุ: ${l.note}</p>` : ''}
+              <p class="font-semibold">${escapeHtml(l.actionType)} ${l.newStatus ? `(${escapeHtml(l.newStatus)})` : ''}</p>
+              ${l.note ? `<p class="text-gray-600 text-xs mt-1">หมายเหตุ: ${escapeHtml(l.note)}</p>` : ''}
             </li>
           `;
         });
