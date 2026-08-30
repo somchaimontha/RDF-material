@@ -403,38 +403,38 @@
     </div>
 
     <div class="mt-8 space-y-1">
-      <button id="sideDashboard" class="side-link active" onclick="switchTab('dashboard')"><i class="fas fa-table-cells-large"></i> แดชบอร์ด</button>
-      <button id="sideScan" class="side-link" onclick="openScanPrompt()"><i class="fas fa-qrcode"></i> สแกน QR</button>
+      <button id="sideDashboard" class="side-link active" onclick="openAppMenu('dashboard')"><i class="fas fa-table-cells-large"></i> แดชบอร์ด</button>
+      <button id="sideScan" class="side-link" onclick="openAppMenu('scan')"><i class="fas fa-qrcode"></i> สแกน QR</button>
     </div>
 
     <div class="side-section-label">ครุภัณฑ์</div>
     <div class="space-y-1">
-      <button id="sideRegistry" class="side-link" onclick="openRegistryView()"><i class="fas fa-cube"></i> ทะเบียนครุภัณฑ์</button>
-      <button id="sideDue" class="side-link" onclick="openDueWorkbench()"><i class="fas fa-clock"></i> กำหนดตรวจ <span id="sideOverdueBadge" class="side-badge hidden">0</span></button>
-      <button id="sideQrPrint" class="side-link" onclick="openQrPrintPanel()"><i class="fas fa-tags"></i> พิมพ์ QR / การ์ด</button>
+      <button id="sideRegistry" class="side-link" onclick="openAppMenu('registry')"><i class="fas fa-cube"></i> ทะเบียนครุภัณฑ์</button>
+      <button id="sideDue" class="side-link" onclick="openAppMenu('due')"><i class="fas fa-clock"></i> กำหนดตรวจ <span id="sideOverdueBadge" class="side-badge hidden">0</span></button>
+      <button id="sideQrPrint" class="side-link" onclick="openAppMenu('qrPrint')"><i class="fas fa-tags"></i> พิมพ์ QR / การ์ด</button>
     </div>
 
     <div class="side-section-label">ตรวจเช็ค & ซ่อม</div>
     <div class="space-y-1">
-      <button id="sideHistory" class="side-link" onclick="openInspectionHistory()"><i class="fas fa-clipboard-check"></i> ประวัติการตรวจ</button>
-      <button id="sideRepair" class="side-link" onclick="openRepairWorkbench()"><i class="fas fa-wrench"></i> งานแจ้งซ่อม <span id="sideRepairBadge" class="side-badge hidden">0</span></button>
+      <button id="sideHistory" class="side-link" onclick="openAppMenu('history')"><i class="fas fa-clipboard-check"></i> ประวัติการตรวจ</button>
+      <button id="sideRepair" class="side-link" onclick="openAppMenu('repair')"><i class="fas fa-wrench"></i> งานแจ้งซ่อม <span id="sideRepairBadge" class="side-badge hidden">0</span></button>
     </div>
 
     <div class="side-section-label">ข้อมูลตั้งต้น</div>
     <div class="space-y-1">
-      <button id="sideLocation" class="side-link" onclick="openDirectoryPanel('location')"><i class="fas fa-location-dot"></i> สถานที่</button>
-      <button id="sideCategory" class="side-link" onclick="openDirectoryPanel('category')"><i class="fas fa-tags"></i> หมวดหมู่</button>
-      <button id="sideDepartment" class="side-link" onclick="openDirectoryPanel('department')"><i class="fas fa-building"></i> หน่วยงาน</button>
-      <button id="sideOwner" class="side-link" onclick="openDirectoryPanel('owner')"><i class="fas fa-users"></i> ผู้รับผิดชอบ</button>
+      <button id="sideLocation" class="side-link" onclick="openAppMenu('location')"><i class="fas fa-location-dot"></i> สถานที่</button>
+      <button id="sideCategory" class="side-link" onclick="openAppMenu('category')"><i class="fas fa-tags"></i> หมวดหมู่</button>
+      <button id="sideDepartment" class="side-link" onclick="openAppMenu('department')"><i class="fas fa-building"></i> หน่วยงาน</button>
+      <button id="sideOwner" class="side-link" onclick="openAppMenu('owner')"><i class="fas fa-users"></i> ผู้รับผิดชอบ</button>
     </div>
 
     <div class="side-section-label">ระบบ</div>
     <div class="space-y-1">
-      <button id="sNavReports" class="side-link hidden" onclick="openReportsModal()"><i class="fas fa-chart-column"></i> รายงาน</button>
-      <button id="sNavStaffManage" class="side-link hidden" onclick="openStaffModal()"><i class="fas fa-user-gear"></i> ผู้ใช้งาน</button>
-      <button id="sNavSettings" class="side-link hidden" onclick="openSettingsModal()"><i class="fas fa-gear"></i> ตั้งค่าระบบ</button>
-      <button id="sNavReportDoc" class="side-link hidden" onclick="openReportDocModal()"><i class="fas fa-file-lines"></i> รายงานเอกสาร</button>
-      <button id="sideRoadmap" class="side-link" onclick="openPhaseRoadmap()"><i class="fas fa-layer-group"></i> แผนระยะงาน</button>
+      <button id="sNavReports" class="side-link hidden" onclick="openAppMenu('reports')"><i class="fas fa-chart-column"></i> รายงาน</button>
+      <button id="sNavStaffManage" class="side-link hidden" onclick="openAppMenu('staff')"><i class="fas fa-user-gear"></i> ผู้ใช้งาน</button>
+      <button id="sNavSettings" class="side-link hidden" onclick="openAppMenu('settings')"><i class="fas fa-gear"></i> ตั้งค่าระบบ</button>
+      <button id="sNavReportDoc" class="side-link hidden" onclick="openAppMenu('reportDoc')"><i class="fas fa-file-lines"></i> รายงานเอกสาร</button>
+      <button id="sideRoadmap" class="side-link" onclick="openAppMenu('roadmap')"><i class="fas fa-layer-group"></i> แผนระยะงาน</button>
     </div>
 
     <div class="sidebar-account">
@@ -465,10 +465,10 @@
         </div>
         <!-- Top menu (admin links) — shown on wide screens only -->
         <div id="topMenu" class="hidden lg:flex items-center gap-1 text-sm font-medium text-gray-600 flex-1 justify-center">
-          <button id="tNavStaffManage" onclick="openStaffModal()" class="hidden px-2.5 py-1.5 rounded-lg hover:bg-teal-bg hover:text-teal-dark whitespace-nowrap"><i class="fas fa-users-gear mr-1.5 text-teal"></i>จัดการบัญชี</button>
-          <button id="tNavSettings" onclick="openSettingsModal()" class="hidden px-2.5 py-1.5 rounded-lg hover:bg-teal-bg hover:text-teal-dark whitespace-nowrap"><i class="fas fa-gear mr-1.5 text-gray-500"></i>ตั้งค่า</button>
-          <button id="tNavReports" onclick="openReportsModal()" class="hidden px-2.5 py-1.5 rounded-lg hover:bg-teal-bg hover:text-teal-dark whitespace-nowrap"><i class="fas fa-chart-simple mr-1.5 text-sky"></i>รายงาน</button>
-          <button id="tNavReportDoc" onclick="openReportDocModal()" class="hidden px-2.5 py-1.5 rounded-lg hover:bg-teal-bg hover:text-teal-dark whitespace-nowrap"><i class="fas fa-file-lines mr-1.5 text-gold-dark"></i>รายงานเอกสาร</button>
+          <button id="tNavStaffManage" onclick="openAppMenu('staff')" class="hidden px-2.5 py-1.5 rounded-lg hover:bg-teal-bg hover:text-teal-dark whitespace-nowrap"><i class="fas fa-users-gear mr-1.5 text-teal"></i>จัดการบัญชี</button>
+          <button id="tNavSettings" onclick="openAppMenu('settings')" class="hidden px-2.5 py-1.5 rounded-lg hover:bg-teal-bg hover:text-teal-dark whitespace-nowrap"><i class="fas fa-gear mr-1.5 text-gray-500"></i>ตั้งค่า</button>
+          <button id="tNavReports" onclick="openAppMenu('reports')" class="hidden px-2.5 py-1.5 rounded-lg hover:bg-teal-bg hover:text-teal-dark whitespace-nowrap"><i class="fas fa-chart-simple mr-1.5 text-sky"></i>รายงาน</button>
+          <button id="tNavReportDoc" onclick="openAppMenu('reportDoc')" class="hidden px-2.5 py-1.5 rounded-lg hover:bg-teal-bg hover:text-teal-dark whitespace-nowrap"><i class="fas fa-file-lines mr-1.5 text-gold-dark"></i>รายงานเอกสาร</button>
         </div>
 
         <!-- Right: login/user + hamburger -->
@@ -485,13 +485,13 @@
                 <i id="userCaret" class="fas fa-chevron-down text-[9px] text-gray-400"></i>
               </button>
               <div id="userMenuDropdown" class="hidden absolute right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 min-w-[220px] z-50">
-                <button onclick="openProfileModal(); toggleUserMenu()" class="w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-user-pen w-5 text-teal"></i> โปรไฟล์</button>
-                <button onclick="openChangePasswordModal(); toggleUserMenu()" class="w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-key w-5 text-gold-dark"></i> เปลี่ยนรหัสผ่าน</button>
+                <button onclick="openProfileModal(); closeUserMenu()" class="w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-user-pen w-5 text-teal"></i> โปรไฟล์</button>
+                <button onclick="openChangePasswordModal(); closeUserMenu()" class="w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-key w-5 text-gold-dark"></i> เปลี่ยนรหัสผ่าน</button>
                 <div class="border-t my-1"></div>
-                <button id="dNavStaffManage" onclick="openStaffModal(); toggleUserMenu()" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-users-gear w-5 text-teal"></i> จัดการบัญชี</button>
-                <button id="dNavSettings" onclick="openSettingsModal(); toggleUserMenu()" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-gear w-5 text-gray-500"></i> ตั้งค่า</button>
-                <button id="dNavReports" onclick="openReportsModal(); toggleUserMenu()" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-chart-simple w-5 text-sky"></i> รายงาน</button>
-                <button id="dNavReportDoc" onclick="openReportDocModal(); toggleUserMenu()" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-file-lines w-5 text-gold-dark"></i> รายงานเอกสาร</button>
+                <button id="dNavStaffManage" onclick="openAppMenu('staff')" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-users-gear w-5 text-teal"></i> จัดการบัญชี</button>
+                <button id="dNavSettings" onclick="openAppMenu('settings')" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-gear w-5 text-gray-500"></i> ตั้งค่า</button>
+                <button id="dNavReports" onclick="openAppMenu('reports')" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-chart-simple w-5 text-sky"></i> รายงาน</button>
+                <button id="dNavReportDoc" onclick="openAppMenu('reportDoc')" class="hidden w-full text-left px-4 py-2 hover:bg-teal-bg text-sm"><i class="fas fa-file-lines w-5 text-gold-dark"></i> รายงานเอกสาร</button>
                 <div class="border-t my-1"></div>
                 <button onclick="logoutUser()" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-right-from-bracket w-5"></i> ออกจากระบบ</button>
               </div>
@@ -503,8 +503,8 @@
         </div>
       </div>
       <div class="flex space-x-4 overflow-x-auto pb-1" id="nav-menu">
-        <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-active px-3 py-2 text-sm whitespace-nowrap"><i class="fas fa-list mr-1"></i> รายการครุภัณฑ์</button>
-        <button onclick="switchTab('add')" id="tab-add" class="px-3 py-2 text-sm text-gray-500 hover-brand whitespace-nowrap"><i class="fas fa-plus-circle mr-1"></i> เพิ่มครุภัณฑ์ใหม่</button>
+        <button onclick="openAppMenu('registry')" id="tab-dashboard" class="nav-active px-3 py-2 text-sm whitespace-nowrap"><i class="fas fa-list mr-1"></i> รายการครุภัณฑ์</button>
+        <button onclick="openAppMenu('add')" id="tab-add" class="px-3 py-2 text-sm text-gray-500 hover-brand whitespace-nowrap"><i class="fas fa-plus-circle mr-1"></i> เพิ่มครุภัณฑ์ใหม่</button>
       </div>
     </div>
   </nav>
@@ -516,14 +516,29 @@
         <i class="fas fa-user-circle"></i>
         <span id="mSessionName">-</span>
       </div>
-      <button id="mNavStaffManage" onclick="openStaffModal(); toggleMobileMenu()" class="hidden w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-users-gear w-6 text-teal"></i> จัดการบัญชี</button>
-      <button id="mNavSettings" onclick="openSettingsModal(); toggleMobileMenu()" class="hidden w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-gear w-6 text-gray-500"></i> ตั้งค่า</button>
-      <button id="mNavReports" onclick="openReportsModal(); toggleMobileMenu()" class="hidden w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-chart-simple w-6 text-sky"></i> รายงาน</button>
-      <button id="mNavReportDoc" onclick="openReportDocModal(); toggleMobileMenu()" class="hidden w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-file-lines w-6 text-gold-dark"></i> รายงานเอกสาร</button>
-      <button onclick="openProfileModal(); toggleMobileMenu()" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-user-pen w-6 text-teal"></i> แก้ไขข้อมูลส่วนตัว</button>
-      <button onclick="openChangePasswordModal(); toggleMobileMenu()" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-key w-6 text-gold-dark"></i> เปลี่ยนรหัสผ่าน</button>
-      <button onclick="logoutUser(); toggleMobileMenu()" class="w-full text-left py-2.5 px-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"><i class="fas fa-right-from-bracket w-6"></i> ออกจากระบบ</button>
-      <button id="mNavLoginBtn" onclick="promptLogin(); toggleMobileMenu()" class="hidden w-full text-left py-2.5 px-3 rounded-lg text-teal font-semibold hover:bg-teal-bg transition-colors"><i class="fas fa-right-to-bracket w-6"></i> เข้าสู่ระบบ</button>
+      <div class="text-xs text-gray-400 px-3 pt-1">เมนูหลัก</div>
+      <button onclick="openAppMenu('dashboard')" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-table-cells-large w-6 text-indigo-500"></i> แดชบอร์ด</button>
+      <button onclick="openAppMenu('scan')" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-qrcode w-6 text-indigo-500"></i> สแกน QR</button>
+      <button onclick="openAppMenu('registry')" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-cube w-6 text-indigo-500"></i> ทะเบียนครุภัณฑ์</button>
+      <button onclick="openAppMenu('due')" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-clock w-6 text-coral"></i> กำหนดตรวจ</button>
+      <button onclick="openAppMenu('qrPrint')" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-tags w-6 text-gold-dark"></i> พิมพ์ QR / การ์ด</button>
+      <button onclick="openAppMenu('history')" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-clipboard-check w-6 text-sky"></i> ประวัติการตรวจ</button>
+      <button onclick="openAppMenu('repair')" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-wrench w-6 text-gold-dark"></i> งานแจ้งซ่อม</button>
+      <div class="text-xs text-gray-400 px-3 pt-2 border-t mt-2">ข้อมูลตั้งต้น</div>
+      <button onclick="openAppMenu('location')" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-location-dot w-6 text-teal"></i> สถานที่</button>
+      <button onclick="openAppMenu('category')" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-tags w-6 text-teal"></i> หมวดหมู่</button>
+      <button onclick="openAppMenu('department')" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-building w-6 text-teal"></i> หน่วยงาน</button>
+      <button onclick="openAppMenu('owner')" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-users w-6 text-teal"></i> ผู้รับผิดชอบ</button>
+      <div class="text-xs text-gray-400 px-3 pt-2 border-t mt-2">ระบบ</div>
+      <button id="mNavStaffManage" onclick="openAppMenu('staff')" class="hidden w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-users-gear w-6 text-teal"></i> จัดการบัญชี</button>
+      <button id="mNavSettings" onclick="openAppMenu('settings')" class="hidden w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-gear w-6 text-gray-500"></i> ตั้งค่า</button>
+      <button id="mNavReports" onclick="openAppMenu('reports')" class="hidden w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-chart-simple w-6 text-sky"></i> รายงาน</button>
+      <button id="mNavReportDoc" onclick="openAppMenu('reportDoc')" class="hidden w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-file-lines w-6 text-gold-dark"></i> รายงานเอกสาร</button>
+      <button onclick="openAppMenu('roadmap')" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-layer-group w-6 text-indigo-500"></i> แผนระยะงาน</button>
+      <button onclick="openProfileModal(); closeMobileMenu()" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-user-pen w-6 text-teal"></i> แก้ไขข้อมูลส่วนตัว</button>
+      <button onclick="openChangePasswordModal(); closeMobileMenu()" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-teal-bg hover:text-teal-dark transition-colors"><i class="fas fa-key w-6 text-gold-dark"></i> เปลี่ยนรหัสผ่าน</button>
+      <button onclick="logoutUser(); closeMobileMenu()" class="w-full text-left py-2.5 px-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"><i class="fas fa-right-from-bracket w-6"></i> ออกจากระบบ</button>
+      <button id="mNavLoginBtn" onclick="promptLogin(); closeMobileMenu()" class="hidden w-full text-left py-2.5 px-3 rounded-lg text-teal font-semibold hover:bg-teal-bg transition-colors"><i class="fas fa-right-to-bracket w-6"></i> เข้าสู่ระบบ</button>
     </div>
   </div>
   <div id="mobileMenuBackdrop" class="hidden lg:hidden fixed inset-0 bg-black bg-opacity-30 z-[44]" onclick="toggleMobileMenu()"></div>
@@ -531,11 +546,11 @@
   <!-- Bottom nav: shown instead of the top tab row once the screen is
        squeezed narrow (mobile) — mirrors rdf-billing-app's responsive nav -->
   <nav class="bottom-nav" id="bottom-nav">
-    <button class="bottom-nav-item active" id="bnav-dashboard" onclick="switchTab('dashboard')">
+    <button class="bottom-nav-item active" id="bnav-dashboard" onclick="openAppMenu('registry')">
       <i class="fas fa-list"></i>
       รายการ
     </button>
-    <button class="bottom-nav-item" id="bnav-add" onclick="switchTab('add')">
+    <button class="bottom-nav-item" id="bnav-add" onclick="openAppMenu('add')">
       <i class="fas fa-plus-circle"></i>
       เพิ่มใหม่
     </button>
@@ -573,7 +588,7 @@
           <p class="text-sm text-gray-500 mt-1">ภาพรวมสถานะครุภัณฑ์และงานที่ต้องดำเนินการ</p>
         </div>
         <div class="flex items-center gap-3 flex-wrap">
-          <button onclick="openScanPrompt()" class="btn" style="background:#4f46e5; color:#fff; box-shadow:0 12px 24px rgba(79,70,229,.25);"><i class="fas fa-qrcode"></i> สแกน QR</button>
+          <button onclick="openAppMenu('scan')" class="btn" style="background:#4f46e5; color:#fff; box-shadow:0 12px 24px rgba(79,70,229,.25);"><i class="fas fa-qrcode"></i> สแกน QR</button>
           <span class="text-sm text-gray-500">ช่วงเวลา:</span>
           <button class="range-chip">สัปดาห์นี้</button>
           <button class="range-chip active">เดือนนี้</button>
@@ -1754,7 +1769,7 @@
       if (SERVER_ACTION === "viewItem") {
         window.location.href = WEBAPP_URL; // Redirect to root
       } else {
-        switchTab('dashboard');
+        openAppMenu('dashboard');
       }
     }
 
@@ -1762,6 +1777,67 @@
       document.querySelectorAll('.side-link').forEach(el => el.classList.remove('active'));
       const active = document.getElementById(id);
       if (active) active.classList.add('active');
+    }
+
+    function closeUserMenu() {
+      const dd = document.getElementById('userMenuDropdown');
+      const caret = document.getElementById('userCaret');
+      if (dd) dd.classList.add('hidden');
+      if (caret) caret.className = 'fas fa-chevron-down text-[9px] text-gray-400';
+    }
+
+    function closeMobileMenu() {
+      const menu = document.getElementById('mobileMenu');
+      const backdrop = document.getElementById('mobileMenuBackdrop');
+      const icon = document.getElementById('hamburgerIcon');
+      if (menu) menu.classList.add('hidden');
+      if (backdrop) backdrop.classList.add('hidden');
+      if (icon) icon.className = 'fas fa-bars';
+    }
+
+    function openAppMenu(menu) {
+      closeUserMenu();
+      closeMobileMenu();
+
+      const routes = {
+        dashboard: () => {
+          switchTab('dashboard');
+          setSideActive('sideDashboard');
+        },
+        registry: openRegistryView,
+        add: () => switchTab('add'),
+        scan: () => {
+          setSideActive('sideScan');
+          openScanPrompt();
+        },
+        due: openDueWorkbench,
+        qrPrint: openQrPrintPanel,
+        history: openInspectionHistory,
+        repair: openRepairWorkbench,
+        location: () => openDirectoryPanel('location'),
+        category: () => openDirectoryPanel('category'),
+        department: () => openDirectoryPanel('department'),
+        owner: () => openDirectoryPanel('owner'),
+        reports: () => {
+          setSideActive('sNavReports');
+          openReportsModal();
+        },
+        staff: () => {
+          setSideActive('sNavStaffManage');
+          openStaffModal();
+        },
+        settings: () => {
+          setSideActive('sNavSettings');
+          openSettingsModal();
+        },
+        reportDoc: () => {
+          setSideActive('sNavReportDoc');
+          openReportDocModal();
+        },
+        roadmap: openPhaseRoadmap
+      };
+
+      (routes[menu] || routes.roadmap)();
     }
 
     function ensureAssetData() {
@@ -2060,9 +2136,9 @@
             </div>`).join('')}
         </div>
         <div class="mt-4 flex gap-2 flex-wrap">
-          <button onclick="openRepairWorkbench()" class="btn btn-gold">เปิดงานระยะ 2</button>
-          <button onclick="openReportsModal()" class="btn btn-neutral">ดูรายงาน</button>
-          <button onclick="openSettingsModal()" class="btn btn-neutral">ตั้งค่าระบบ</button>
+          <button onclick="openAppMenu('repair')" class="btn btn-gold">เปิดงานระยะ 2</button>
+          <button onclick="openAppMenu('reports')" class="btn btn-neutral">ดูรายงาน</button>
+          <button onclick="openAppMenu('settings')" class="btn btn-neutral">ตั้งค่าระบบ</button>
         </div>`;
       openMenuWorkbench('แผนระยะงาน', 'จัดเมนูให้เดินตามแผนพัฒนาเดิม และแยกสิ่งที่พร้อมใช้กับสิ่งที่ต้องต่อ schema ชัดเจน', body);
     }
