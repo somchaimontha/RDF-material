@@ -35,6 +35,7 @@
       --text-muted: #8CA09D;
       --border-hairline: rgba(30,140,134,0.14);
       --gridline: #E1EDEC;
+      --sidebar-width: 260px;
 
       --shadow-card: 0 4px 20px rgba(43,168,162,.10);
       --shadow-coral-glow: 0 4px 20px rgba(239,108,74,.35);
@@ -48,7 +49,8 @@
       display: none;
       position: fixed;
       inset: 0 auto 0 0;
-      width: 260px;
+      width: var(--sidebar-width);
+      box-sizing: border-box;
       background: #171823;
       color: #d7d8e5;
       z-index: 30;
@@ -182,9 +184,22 @@
     @media (min-width: 1024px) {
       body { background: #f4f5f8; }
       .app-sidebar { display: block; }
-      .app-topbar { margin-left: 260px; box-shadow: none; border-bottom: 1px solid #e6e7ee; }
+      .app-topbar {
+        margin-left: var(--sidebar-width) !important;
+        margin-right: 0 !important;
+        width: calc(100% - var(--sidebar-width));
+        box-shadow: none;
+        border-bottom: 1px solid #e6e7ee;
+      }
       .app-topbar > div { max-width: none; }
-      .app-main { margin-left: 260px; max-width: none; padding: 28px 28px 72px; }
+      .app-main {
+        margin-left: var(--sidebar-width) !important;
+        margin-right: 0 !important;
+        width: calc(100% - var(--sidebar-width));
+        max-width: none !important;
+        padding: 28px 28px 72px;
+        box-sizing: border-box;
+      }
       #nav-menu { display: none !important; }
       #topMenu { display: none !important; }
       .bottom-nav { display: none !important; }

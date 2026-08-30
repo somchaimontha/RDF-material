@@ -173,6 +173,11 @@ GitHub Pages (index.html)  --fetch()-->  Apps Script /exec (JSON API)  --> Googl
     - เพิ่มรายการเมนูใหม่ทั้งหมดเข้า hamburger menu บนจอ tablet/mobile เพื่อไม่ให้เมนูเก่าหายไปจาก flow
     - ปรับปุ่ม admin เดิม เช่น รายงาน, รายงานเอกสาร, ตั้งค่า และจัดการบัญชี ให้ตั้ง active state
       และปิด dropdown/mobile menu อย่างเป็นระบบหลังเลือกเมนู
+35. **แก้ dashboard ถูก sidebar บดบังบน desktop** —
+    - กำหนด `--sidebar-width` เป็นค่ากลาง และล็อก `app-topbar`/`app-main` ให้เริ่มหลัง sidebar
+      ด้วย `margin-left` + `width: calc(100% - var(--sidebar-width))`
+    - ใส่ `box-sizing: border-box` และ `!important` เฉพาะ layout shell เพื่อกัน class utility เดิม
+      ทำให้พื้นที่ dashboard ไหลเข้าใต้เมนูซ้าย
 
 ## ยังไม่ได้ทำ (ผู้ใช้ขอเพิ่มเติม รอทำต่อ)
 - นำเข้าข้อมูลชุดใหญ่ (Bulk import)
