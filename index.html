@@ -971,6 +971,20 @@
               <p class="text-gray-500">ผู้จัดซื้อ</p>
               <p class="font-semibold text-gray-900" id="v-buyer">-</p>
             </div>
+            <div class="col-span-2 grid grid-cols-3 gap-2">
+              <div class="rounded-lg border bg-gray-50 p-3">
+                <p class="text-gray-500">ทั้งหมด</p>
+                <p class="font-semibold text-gray-900" id="v-total-qty">-</p>
+              </div>
+              <div class="rounded-lg border bg-gray-50 p-3">
+                <p class="text-gray-500">ถูกยืม</p>
+                <p class="font-semibold text-gray-900" id="v-borrowed-qty">-</p>
+              </div>
+              <div class="rounded-lg border bg-gray-50 p-3">
+                <p class="text-gray-500">คงเหลือ</p>
+                <p class="font-semibold text-gray-900" id="v-available-qty">-</p>
+              </div>
+            </div>
           </div>
 
           <div id="v-description-wrap" class="hidden">
@@ -1005,6 +1019,7 @@
               <p>ผู้ยืม: <span id="v-borrower" class="font-semibold">-</span></p>
               <p>วันที่ยืม: <span id="v-borrow-date">-</span></p>
               <p>กำหนดคืน: <span id="v-due-date">-</span></p>
+              <div id="v-borrow-loans" class="pt-2 space-y-1"></div>
             </div>
           </div>
 
@@ -1082,6 +1097,11 @@
           <input type="text" id="bBorrower" class="w-full border rounded-lg px-4 py-2">
         </div>
         <div>
+          <label class="block text-sm font-medium mb-1">จำนวนที่ยืม <span class="text-red-500">*</span></label>
+          <input type="number" id="bQuantity" min="1" step="1" value="1" class="w-full border rounded-lg px-4 py-2">
+          <p id="bAvailableHint" class="text-xs text-gray-500 mt-1">คงเหลือ: -</p>
+        </div>
+        <div>
           <label class="block text-sm font-medium mb-1">กำหนดคืน</label>
           <input type="date" id="bDueDate" class="w-full border rounded-lg px-4 py-2">
         </div>
@@ -1108,6 +1128,16 @@
         <div class="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
           <p>ผู้ยืม: <span id="rBorrowerDisplay" class="font-semibold">-</span></p>
           <p>กำหนดคืน: <span id="rDueDisplay">-</span></p>
+          <p>จำนวนที่ถูกยืม: <span id="rBorrowedDisplay" class="font-semibold">-</span></p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">รายการยืม</label>
+          <select id="rBorrowLoan" class="w-full border rounded-lg px-4 py-2" onchange="syncReturnQuantityLimit()"></select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">จำนวนที่คืน <span class="text-red-500">*</span></label>
+          <input type="number" id="rQuantity" min="1" step="1" value="1" class="w-full border rounded-lg px-4 py-2">
+          <p id="rQuantityHint" class="text-xs text-gray-500 mt-1">คืนได้: -</p>
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">สภาพเมื่อคืน</label>
@@ -3702,6 +3732,7 @@
       const todayStr = new Date().toISOString().slice(0, 10);
       let html = '';
       assets.forEach(a => {
+        normalizeBorrowUiState(a);
         const tone = getStatusTone(a.status);
         const isOverdue = a.status === 'ถูกยืมอยู่' && a.dueDate && a.dueDate < todayStr;
         const checked = selectedIds.has(a.inventoryId) ? 'checked' : '';
@@ -3719,6 +3750,7 @@
               <div class="font-bold text-sm truncate" style="color:var(--teal-dark)">${escapeHtml(a.inventoryId)}</div>
               <div class="text-sm text-gray-800 truncate">${escapeHtml(a.itemName)}</div>
               <div class="text-xs text-gray-500 truncate">${escapeHtml(a.location || '')}</div>
+              <div class="text-[11px] text-gray-400">คงเหลือ ${a._availableQuantity.toLocaleString()}/${a._totalQuantity.toLocaleString()} ${escapeHtml(a.unit || 'ชิ้น')}</div>
             </a>
             <div class="flex flex-col items-end gap-1 flex-shrink-0">
               <span class="badge tone-${tone}">${escapeHtml(a.status)}</span>
@@ -3734,6 +3766,7 @@
     function buildAssetsTableHtml(assets) {
       const todayStr = new Date().toISOString().slice(0, 10);
       const rows = assets.map(a => {
+        normalizeBorrowUiState(a);
         const tone = getStatusTone(a.status);
         const isOverdue = a.status === 'ถูกยืมอยู่' && a.dueDate && a.dueDate < todayStr;
         const checked = selectedIds.has(a.inventoryId) ? 'checked' : '';
@@ -3751,6 +3784,7 @@
               <span class="badge tone-${tone}">${escapeHtml(a.status)}</span>
               ${isOverdue ? `<div class="text-[10px] font-bold mt-0.5" style="color:var(--error)">เกินกำหนดคืน</div>` : ''}
             </td>
+            <td class="py-2 pr-3 whitespace-nowrap text-gray-600">${a._availableQuantity.toLocaleString()}/${a._totalQuantity.toLocaleString()} ${escapeHtml(a.unit || 'ชิ้น')}</td>
             <td class="py-2 pr-3 max-w-[160px] truncate text-gray-600" title="${escapeHtml(a.location || '')}">${escapeHtml(a.location || '-')}</td>
             <td class="py-2 pr-3 text-right whitespace-nowrap">${a.price ? parseFloat(a.price).toLocaleString() + ' บ.' : '-'}</td>
             <td class="py-2 pl-1 text-right">
@@ -3769,6 +3803,7 @@
                 <th class="py-2 pr-3 font-medium">ชื่อรายการ</th>
                 <th class="py-2 pr-3 font-medium">หมวดหมู่</th>
                 <th class="py-2 pr-3 font-medium">สถานะ</th>
+                <th class="py-2 pr-3 font-medium">คงเหลือ</th>
                 <th class="py-2 pr-3 font-medium">สถานที่</th>
                 <th class="py-2 pr-3 font-medium text-right">ราคา</th>
                 <th class="py-2 pl-1 font-medium"></th>
@@ -4145,7 +4180,14 @@
         });
     }
 
+    function refreshCurrentAssetDetail() {
+      if (!currentViewAsset || !currentViewAsset.inventoryId) return;
+      loadAssetById(currentViewAsset.inventoryId);
+      if (allAssets.length) loadAssets();
+    }
+
     function renderViewItem(a) {
+      normalizeBorrowUiState(a);
       document.getElementById('v-name').innerText = a.itemName;
       document.getElementById('v-id').innerText = 'รหัส: ' + a.inventoryId;
       document.getElementById('v-status').innerText = a.status;
@@ -4156,6 +4198,9 @@
       document.getElementById('v-loc').innerText = a.location || '-';
       document.getElementById('v-price').innerText = a.price ? parseFloat(a.price).toLocaleString() + ' บ.' : '-';
       document.getElementById('v-buyer').innerText = a.buyerName || '-';
+      document.getElementById('v-total-qty').innerText = `${a._totalQuantity.toLocaleString()} ${a.unit || 'ชิ้น'}`;
+      document.getElementById('v-borrowed-qty').innerText = `${a._borrowedQuantity.toLocaleString()} ${a.unit || 'ชิ้น'}`;
+      document.getElementById('v-available-qty').innerText = `${a._availableQuantity.toLocaleString()} ${a.unit || 'ชิ้น'}`;
 
       const descWrap = document.getElementById('v-description-wrap');
       if (a.description) {
@@ -4168,9 +4213,9 @@
       document.getElementById('v-qr').src = a.qrcode;
 
       // Borrow/Return button + info visibility
-      const blockedBorrow = ['ถูกยืมอยู่', 'จำหน่ายแล้ว', 'สูญหาย'];
-      document.getElementById('btn-borrow').classList.toggle('hidden', blockedBorrow.includes(a.status));
-      document.getElementById('btn-return').classList.toggle('hidden', a.status !== 'ถูกยืมอยู่');
+      const blockedBorrow = ['จำหน่ายแล้ว', 'สูญหาย', 'ชำรุด', 'ส่งซ่อม'];
+      document.getElementById('btn-borrow').classList.toggle('hidden', blockedBorrow.includes(a.status) || a._availableQuantity <= 0);
+      document.getElementById('btn-return').classList.toggle('hidden', a._borrowedQuantity <= 0);
 
       // Deleting is admin-only on the backend — hide the button entirely for
       // anyone else instead of letting them hit a permission error.
@@ -4181,6 +4226,7 @@
         document.getElementById('v-borrower').innerText = a.currentBorrower || '-';
         document.getElementById('v-borrow-date').innerText = a.borrowDate || '-';
         document.getElementById('v-due-date').innerText = a.dueDate || '-';
+        document.getElementById('v-borrow-loans').innerHTML = renderBorrowLoanRows(a._borrowLoans, a.unit);
         borrowInfo.classList.remove('hidden');
       } else {
         borrowInfo.classList.add('hidden');
@@ -4221,6 +4267,55 @@
       }
     }
 
+    function wholeNumber(value, fallback = 0) {
+      const n = parseInt(value, 10);
+      return Number.isFinite(n) && n >= 0 ? n : fallback;
+    }
+
+    function normalizeBorrowUiState(asset) {
+      const total = wholeNumber(asset.quantity, 1) || 1;
+      let loans = Array.isArray(asset.borrowLoans) ? asset.borrowLoans : [];
+      if (!loans.length && asset.borrowLedger) {
+        try {
+          const parsed = JSON.parse(asset.borrowLedger);
+          if (Array.isArray(parsed)) loans = parsed;
+        } catch (e) { loans = []; }
+      }
+      loans = loans.map((loan, index) => ({
+        id: String(loan.id || `legacy-${index}`),
+        borrowerName: String(loan.borrowerName || asset.currentBorrower || 'ไม่ระบุผู้ยืม'),
+        quantity: wholeNumber(loan.quantity, 0),
+        borrowDate: loan.borrowDate || asset.borrowDate || '',
+        dueDate: loan.dueDate || asset.dueDate || '',
+        note: loan.note || ''
+      })).filter(loan => loan.quantity > 0);
+      if (!loans.length && asset.status === 'ถูกยืมอยู่') {
+        loans = [{
+          id: 'legacy',
+          borrowerName: asset.currentBorrower || 'ไม่ระบุผู้ยืม',
+          quantity: wholeNumber(asset.borrowedQuantity, total) || total,
+          borrowDate: asset.borrowDate || '',
+          dueDate: asset.dueDate || '',
+          note: ''
+        }];
+      }
+      const borrowed = Math.min(loans.reduce((sum, loan) => sum + loan.quantity, 0), total);
+      asset._totalQuantity = total;
+      asset._borrowedQuantity = borrowed;
+      asset._availableQuantity = Math.max(total - borrowed, 0);
+      asset._borrowLoans = loans;
+    }
+
+    function renderBorrowLoanRows(loans, unit) {
+      if (!loans || !loans.length) return '';
+      return loans.map(loan => `
+        <div class="flex justify-between gap-3 text-xs bg-white rounded border px-2 py-1">
+          <span class="truncate">${escapeHtml(loan.borrowerName)}${loan.dueDate ? ` · คืน ${escapeHtml(loan.dueDate)}` : ''}</span>
+          <b>${loan.quantity.toLocaleString()} ${escapeHtml(unit || 'ชิ้น')}</b>
+        </div>
+      `).join('');
+    }
+
     // ========== UPDATE STATUS ==========
     function openStatusModal() {
       if (!currentViewAsset) return;
@@ -4248,7 +4343,7 @@
         showLoading(false);
         closeStatusModal();
         Swal.fire('สำเร็จ', res.message, 'success');
-        loadAssetById(SERVER_ID);
+        refreshCurrentAssetDetail();
       } catch (err) {
         showLoading(false);
         if (err.message !== 'ยกเลิกการดำเนินการ') Swal.fire('ข้อผิดพลาด', err.message, 'error');
@@ -4258,7 +4353,11 @@
     // ========== BORROW ==========
     function openBorrowModal() {
       if (!currentViewAsset) return;
+      normalizeBorrowUiState(currentViewAsset);
       document.getElementById('bBorrower').value = '';
+      document.getElementById('bQuantity').value = currentViewAsset._availableQuantity > 0 ? 1 : 0;
+      document.getElementById('bQuantity').max = currentViewAsset._availableQuantity;
+      document.getElementById('bAvailableHint').innerText = `คงเหลือ: ${currentViewAsset._availableQuantity.toLocaleString()} ${currentViewAsset.unit || 'ชิ้น'}`;
       document.getElementById('bDueDate').value = '';
       document.getElementById('bNote').value = '';
       document.getElementById('borrowModal').classList.remove('hidden');
@@ -4271,12 +4370,19 @@
     async function submitBorrow() {
       const borrowerName = document.getElementById('bBorrower').value.trim();
       if (!borrowerName) { Swal.fire('กรอกข้อมูลไม่ครบ', 'กรุณากรอกชื่อผู้ยืม', 'warning'); return; }
+      const borrowQuantity = wholeNumber(document.getElementById('bQuantity').value, 0);
+      normalizeBorrowUiState(currentViewAsset);
+      if (borrowQuantity <= 0 || borrowQuantity > currentViewAsset._availableQuantity) {
+        Swal.fire('จำนวนไม่ถูกต้อง', `ยืมได้สูงสุด ${currentViewAsset._availableQuantity.toLocaleString()} ${currentViewAsset.unit || 'ชิ้น'}`, 'warning');
+        return;
+      }
 
       const payload = {
         rowIndex: currentViewAsset._rowIndex,
         inventoryId: currentViewAsset.inventoryId,
         itemName: currentViewAsset.itemName,
         borrowerName: borrowerName,
+        borrowQuantity: borrowQuantity,
         dueDate: document.getElementById('bDueDate').value,
         note: document.getElementById('bNote').value
       };
@@ -4287,7 +4393,7 @@
         showLoading(false);
         closeBorrowModal();
         Swal.fire('สำเร็จ', res.message, 'success');
-        loadAssetById(SERVER_ID);
+        refreshCurrentAssetDetail();
       } catch (err) {
         showLoading(false);
         if (err.message !== 'ยกเลิกการดำเนินการ') Swal.fire('ข้อผิดพลาด', err.message, 'error');
@@ -4297,10 +4403,17 @@
     // ========== RETURN ==========
     function openReturnModal() {
       if (!currentViewAsset) return;
+      normalizeBorrowUiState(currentViewAsset);
       document.getElementById('rBorrowerDisplay').innerText = currentViewAsset.currentBorrower || '-';
       document.getElementById('rDueDisplay').innerText = currentViewAsset.dueDate || '-';
+      document.getElementById('rBorrowedDisplay').innerText = `${currentViewAsset._borrowedQuantity.toLocaleString()} ${currentViewAsset.unit || 'ชิ้น'}`;
+      const loanSelect = document.getElementById('rBorrowLoan');
+      loanSelect.innerHTML = '<option value="all">คืนจากทุกรายการยืม</option>' + currentViewAsset._borrowLoans.map(loan =>
+        `<option value="${escapeHtml(loan.id)}">${escapeHtml(loan.borrowerName)} — ${loan.quantity.toLocaleString()} ${escapeHtml(currentViewAsset.unit || 'ชิ้น')}${loan.dueDate ? ` / ${escapeHtml(loan.dueDate)}` : ''}</option>`
+      ).join('');
       document.getElementById('rStatus').value = 'ใช้งานได้';
       document.getElementById('rNote').value = '';
+      syncReturnQuantityLimit();
       document.getElementById('returnModal').classList.remove('hidden');
     }
 
@@ -4308,11 +4421,38 @@
       document.getElementById('returnModal').classList.add('hidden');
     }
 
+    function getSelectedReturnMax() {
+      if (!currentViewAsset) return 0;
+      normalizeBorrowUiState(currentViewAsset);
+      const selectedLoanId = document.getElementById('rBorrowLoan').value;
+      if (!selectedLoanId || selectedLoanId === 'all') return currentViewAsset._borrowedQuantity;
+      const loan = currentViewAsset._borrowLoans.find(item => item.id === selectedLoanId);
+      return loan ? loan.quantity : 0;
+    }
+
+    function syncReturnQuantityLimit() {
+      const maxReturn = getSelectedReturnMax();
+      const qty = document.getElementById('rQuantity');
+      if (!qty) return;
+      qty.max = maxReturn;
+      qty.value = maxReturn > 0 ? Math.min(wholeNumber(qty.value, 1) || 1, maxReturn) : 0;
+      document.getElementById('rQuantityHint').innerText = `คืนได้: ${maxReturn.toLocaleString()} ${currentViewAsset?.unit || 'ชิ้น'}`;
+    }
+
     async function submitReturn() {
+      normalizeBorrowUiState(currentViewAsset);
+      const returnQuantity = wholeNumber(document.getElementById('rQuantity').value, 0);
+      const maxReturn = getSelectedReturnMax();
+      if (returnQuantity <= 0 || returnQuantity > maxReturn) {
+        Swal.fire('จำนวนไม่ถูกต้อง', `คืนได้สูงสุด ${maxReturn.toLocaleString()} ${currentViewAsset.unit || 'ชิ้น'}`, 'warning');
+        return;
+      }
       const payload = {
         rowIndex: currentViewAsset._rowIndex,
         inventoryId: currentViewAsset.inventoryId,
         itemName: currentViewAsset.itemName,
+        borrowLoanId: document.getElementById('rBorrowLoan').value,
+        returnQuantity: returnQuantity,
         returnStatus: document.getElementById('rStatus').value,
         note: document.getElementById('rNote').value
       };
@@ -4323,7 +4463,7 @@
         showLoading(false);
         closeReturnModal();
         Swal.fire('สำเร็จ', res.message, 'success');
-        loadAssetById(SERVER_ID);
+        refreshCurrentAssetDetail();
       } catch (err) {
         showLoading(false);
         if (err.message !== 'ยกเลิกการดำเนินการ') Swal.fire('ข้อผิดพลาด', err.message, 'error');
@@ -4392,7 +4532,7 @@
         showLoading(false);
         closeEditModal();
         Swal.fire('สำเร็จ', res.message, 'success');
-        loadAssetById(SERVER_ID);
+        refreshCurrentAssetDetail();
       } catch (err) {
         showLoading(false);
         if (err.message !== 'ยกเลิกการดำเนินการ') Swal.fire('ข้อผิดพลาด', err.message, 'error');
