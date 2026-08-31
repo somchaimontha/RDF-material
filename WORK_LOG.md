@@ -202,12 +202,12 @@ GitHub Pages (index.html)  --fetch()-->  Apps Script /exec (JSON API)  --> Googl
 
 ## สถานะการ deploy (ล่าสุด)
 
-- ✅ `code.gs` deploy แล้ว เวอร์ชัน 29 (29 ส.ค. 2569 13:50) — อัปเดต security hardening,
-  Bulk import, Login history และ Dashboard UI endpoint ผ่าน deployment เดิม
-- ✅ `index.html` push ขึ้น GitHub Pages แล้ว (ล่าสุด: ปรับ Dashboard เป็น sidebar workspace +
-  บันทึก security hardening)
-- ✅ รัน `setup`, `regenerateAllQrCodes`, `fixDuplicateInventoryIds` แล้ว — **⚠️ หลัง deploy ต้องรัน
-  `setup()` อีกครั้ง (เวอร์ชันใหม่) เพื่อสร้างชีต `LoginHistory`**
+- ✅ `code.gs` deploy แล้ว เวอร์ชัน 31 (31 ส.ค. 2569) — อัปเดต P2.1 ยืม-คืนแบบแยกจำนวนบางส่วน
+  และ self-healing headers ผ่าน deployment เดิม
+- ✅ `index.html` push ขึ้น GitHub Pages แล้ว (ล่าสุด: popup รายละเอียดแสดงจำนวนทั้งหมด/ถูกยืม/คงเหลือ
+  และ modal ยืม-คืนเลือกจำนวนได้)
+- ⚠️ `clasp run setup` ยังเจอ Apps Script server error `NOT_FOUND` ขณะอ่าน storage; โค้ดล่าสุดจึงเติม header
+  `borrowedQuantity`, `borrowLedger` และ `quantity` ในประวัติแบบ self-heal เมื่อเรียกใช้งาน API ที่เกี่ยวข้อง
 
 ## เช็กลิสต์ที่เหลือ (Google Sign-In)
 
