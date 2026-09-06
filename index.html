@@ -367,42 +367,70 @@
 
     /* ===== QR Label Printing ===== */
     #printArea { display: none; }
+    #printArea.qr-label-sheet {
+      --qr-label-width: 70mm;
+      --qr-label-height: 36mm;
+      --qr-label-padding: 3mm;
+      --qr-image-size: 29.4mm;
+    }
     .print-label {
       display: inline-flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
+      justify-content: flex-start;
+      gap: 2mm;
       box-sizing: border-box;
-      width: 220px;
-      height: 300px;
-      margin: 8px;
-      padding: 12px 10px;
-      text-align: center;
-      border: 1px dashed #9ca3af;
-      border-radius: 8px;
+      width: var(--qr-label-width);
+      height: var(--qr-label-height);
+      margin: 0;
+      padding: var(--qr-label-padding);
+      text-align: left;
+      border: 0;
+      border-radius: 0;
       overflow: hidden;
       break-inside: avoid;
       page-break-inside: avoid;
+      vertical-align: top;
     }
-    .print-label img { width: 150px; height: 150px; flex-shrink: 0; }
+    .print-label img {
+      width: var(--qr-image-size);
+      height: var(--qr-image-size);
+      flex: 0 0 var(--qr-image-size);
+      object-fit: contain;
+    }
     .print-label .pl-text {
-      width: 100%;
-      height: 110px;
-      margin-top: 6px;
+      flex: 1 1 auto;
+      min-width: 0;
+      width: auto;
+      height: 100%;
+      margin-top: 0;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       overflow: hidden;
-      font-size: 13px;
-      line-height: 1.25;
+      font-size: 10px;
+      line-height: 1.15;
     }
+    .print-label .pl-text p { max-width: 100%; overflow-wrap: anywhere; }
     .print-label .pl-name { font-weight: 700; font-size: 1em; margin: 0; word-break: break-word; }
     .print-label .pl-id { font-size: 0.82em; color: #555; margin: 0; }
     .print-label .pl-loc { font-size: 0.72em; color: #777; margin: 0; }
     @media print {
-      @page { margin: 10mm; }
+      @page { size: A4 portrait; margin: 10mm; }
       body > *:not(#printArea) { display: none !important; }
       #printArea { display: block !important; }
+      #printArea.qr-label-sheet {
+        display: grid !important;
+        width: 210mm;
+        grid-template-columns: repeat(auto-fill, var(--qr-label-width));
+        grid-auto-rows: var(--qr-label-height);
+        justify-content: start;
+        align-content: start;
+        gap: 0;
+        margin: 0;
+        padding: 0;
+      }
     }
   </style>
 </head>
@@ -1594,7 +1622,7 @@
 
   <!-- QR Label Settings Modal -->
   <div id="qrSettingsModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex justify-center items-center p-4">
-    <div class="bg-white rounded-xl shadow-lg w-full max-w-sm">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
       <div class="p-4 border-b flex justify-between items-center">
         <h3 class="font-bold text-lg">ตั้งค่าข้อมูลบนป้าย QR</h3>
         <button onclick="closeQrSettingsModal()" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times text-xl"></i></button>
@@ -1603,6 +1631,24 @@
         <p class="text-xs text-gray-500 mb-2">เลือกข้อมูลที่จะพิมพ์ใต้ QR (นอกจากตัว QR) — จะจำค่าที่เลือกไว้ให้ในเครื่องนี้</p>
         <div id="qrFieldOptions" class="divide-y">
           <!-- Checkboxes injected -->
+        </div>
+        <div class="mt-4 pt-4 border-t">
+          <h4 class="font-semibold text-sm mb-2">ขนาดสติ๊กเกอร์</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <label class="text-xs text-gray-500">
+              กว้าง (mm)
+              <input id="qrLabelWidthMm" type="number" min="20" max="210" step="0.5" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm text-gray-800" inputmode="decimal">
+            </label>
+            <label class="text-xs text-gray-500">
+              สูง (mm)
+              <input id="qrLabelHeightMm" type="number" min="15" max="297" step="0.5" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm text-gray-800" inputmode="decimal">
+            </label>
+            <label class="text-xs text-gray-500">
+              ขอบใน (mm)
+              <input id="qrLabelPaddingMm" type="number" min="0" max="20" step="0.5" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm text-gray-800" inputmode="decimal">
+            </label>
+          </div>
+          <p class="text-xs text-gray-400 mt-2">ค่าเริ่มต้นสำหรับ A4 แนวตั้ง: กว้าง 70mm, สูง 36mm, ขอบใน 3mm</p>
         </div>
       </div>
       <div class="p-4 border-t flex space-x-2">
@@ -1716,6 +1762,8 @@
     ];
     const QR_FIELDS_STORAGE_KEY = 'rdf_qr_fields';
     const QR_FIELDS_DEFAULT = ['itemName', 'inventoryId', 'location'];
+    const QR_LABEL_LAYOUT_STORAGE_KEY = 'rdf_qr_label_layout';
+    const QR_LABEL_LAYOUT_DEFAULT = { widthMm: 70, heightMm: 36, paddingMm: 3 };
 
     function getQrFieldSettings() {
       try {
@@ -1727,6 +1775,99 @@
 
     function saveQrFieldSettings(fields) {
       localStorage.setItem(QR_FIELDS_STORAGE_KEY, JSON.stringify(fields));
+    }
+
+    function clampNumber(value, fallback, min, max) {
+      const num = parseFloat(value);
+      if (!isFinite(num)) return fallback;
+      return Math.min(max, Math.max(min, num));
+    }
+
+    function normalizeQrLabelLayout(layout) {
+      const widthMm = clampNumber(layout?.widthMm, QR_LABEL_LAYOUT_DEFAULT.widthMm, 20, 210);
+      const heightMm = clampNumber(layout?.heightMm, QR_LABEL_LAYOUT_DEFAULT.heightMm, 15, 297);
+      const maxPadding = Math.max(0, Math.min(widthMm, heightMm) / 2 - 1);
+      const paddingMm = clampNumber(layout?.paddingMm, QR_LABEL_LAYOUT_DEFAULT.paddingMm, 0, Math.min(20, maxPadding));
+      return { widthMm, heightMm, paddingMm };
+    }
+
+    function getQrLabelLayoutSettings() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(QR_LABEL_LAYOUT_STORAGE_KEY));
+        if (saved && typeof saved === 'object') return normalizeQrLabelLayout(saved);
+      } catch (e) { /* ignore malformed storage, fall through to default */ }
+      return normalizeQrLabelLayout(QR_LABEL_LAYOUT_DEFAULT);
+    }
+
+    function saveQrLabelLayoutSettings(layout) {
+      localStorage.setItem(QR_LABEL_LAYOUT_STORAGE_KEY, JSON.stringify(normalizeQrLabelLayout(layout)));
+    }
+
+    function setQrLabelLayoutInputs(layout) {
+      const width = document.getElementById('qrLabelWidthMm');
+      const height = document.getElementById('qrLabelHeightMm');
+      const padding = document.getElementById('qrLabelPaddingMm');
+      if (width) width.value = layout.widthMm;
+      if (height) height.value = layout.heightMm;
+      if (padding) padding.value = layout.paddingMm;
+    }
+
+    function readQrLabelLayoutInputs() {
+      return normalizeQrLabelLayout({
+        widthMm: document.getElementById('qrLabelWidthMm')?.value,
+        heightMm: document.getElementById('qrLabelHeightMm')?.value,
+        paddingMm: document.getElementById('qrLabelPaddingMm')?.value
+      });
+    }
+
+    function applyQrLabelLayout(area) {
+      const layout = getQrLabelLayoutSettings();
+      const innerWidthMm = Math.max(1, layout.widthMm - layout.paddingMm * 2);
+      const innerHeightMm = Math.max(1, layout.heightMm - layout.paddingMm * 2);
+      const qrImageMm = Math.max(8, Math.min(innerHeightMm, innerWidthMm * 0.46));
+      enableQrPrintPageStyle();
+      area.classList.add('qr-label-sheet');
+      area.style.setProperty('--qr-label-width', layout.widthMm + 'mm');
+      area.style.setProperty('--qr-label-height', layout.heightMm + 'mm');
+      area.style.setProperty('--qr-label-padding', layout.paddingMm + 'mm');
+      area.style.setProperty('--qr-image-size', qrImageMm + 'mm');
+    }
+
+    function clearQrLabelLayout(area) {
+      area.classList.remove('qr-label-sheet');
+      area.style.removeProperty('--qr-label-width');
+      area.style.removeProperty('--qr-label-height');
+      area.style.removeProperty('--qr-label-padding');
+      area.style.removeProperty('--qr-image-size');
+      disableQrPrintPageStyle();
+    }
+
+    function enableQrPrintPageStyle() {
+      if (document.getElementById('qrPrintPageStyle')) return;
+      const style = document.createElement('style');
+      style.id = 'qrPrintPageStyle';
+      style.textContent = `
+        @page { size: A4 portrait; margin: 0; }
+        @media print {
+          html, body { width: 210mm; margin: 0 !important; padding: 0 !important; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    function disableQrPrintPageStyle() {
+      document.getElementById('qrPrintPageStyle')?.remove();
+    }
+
+    function getAssetViewUrl(asset) {
+      return `${WEBAPP_URL}?action=viewItem&id=${encodeURIComponent(asset?.inventoryId || '')}`;
+    }
+
+    function getAssetQrImageUrl(asset) {
+      if (!asset) return '';
+      const id = String(asset.inventoryId || '').trim();
+      if (!id) return asset.qrcode || '';
+      return 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(getAssetViewUrl(asset));
     }
 
     // "2024-09-29" (ISO, from <input type="date">) -> "29/09/2567" (Thai วัน/เดือน/ปี พ.ศ.)
@@ -3931,7 +4072,7 @@
       }).join('');
       return `
         <div class="print-label">
-          <img src="${escapeHtml(a.qrcode)}">
+          <img src="${escapeHtml(getAssetQrImageUrl(a))}" alt="QR Code" loading="eager" decoding="sync">
           <div class="pl-text">${lines}</div>
         </div>
       `;
@@ -3957,9 +4098,9 @@
         return `<p class="text-sm flex justify-between gap-3"><span class="text-gray-500">${escapeHtml(label)}</span><span class="font-semibold text-right">${escapeHtml(value)}</span></p>`;
       }).join('');
 
-      document.getElementById('qrPreviewImg').src = a.qrcode;
+      document.getElementById('qrPreviewImg').src = getAssetQrImageUrl(a);
       document.getElementById('qrPreviewInfo').innerHTML = lines || '<p class="text-sm text-gray-400 text-center">ไม่มีข้อมูลย่อให้แสดง</p>';
-      document.getElementById('qrPreviewFullLink').href = `${WEBAPP_URL}?action=viewItem&id=${encodeURIComponent(a.inventoryId)}`;
+      document.getElementById('qrPreviewFullLink').href = getAssetViewUrl(a);
 
       // Photo of the item itself, if one was uploaded — so the person
       // scanning can confirm at a glance which physical thing this is.
@@ -3982,6 +4123,7 @@
     // ========== QR LABEL SETTINGS MODAL ==========
     function openQrSettingsModal() {
       const selected = getQrFieldSettings();
+      setQrLabelLayoutInputs(getQrLabelLayoutSettings());
       const container = document.getElementById('qrFieldOptions');
       container.innerHTML = QR_FIELD_DEFS.map(f => `
         <label class="flex items-center gap-2 py-1.5 text-sm cursor-pointer">
@@ -4002,6 +4144,7 @@
       // Keep the fixed QR_FIELD_DEFS order regardless of checkbox click order.
       const ordered = QR_FIELD_DEFS.map(f => f.key).filter(k => checked.includes(k));
       saveQrFieldSettings(ordered);
+      saveQrLabelLayoutSettings(readQrLabelLayoutInputs());
       closeQrSettingsModal();
       Swal.fire({ icon: 'success', title: 'บันทึกการตั้งค่าป้าย QR แล้ว', timer: 1200, showConfirmButton: false });
     }
@@ -4009,20 +4152,73 @@
     // Shrinks a label's text block font-size until it fits its fixed box —
     // so long item names/locations are never cut off or clipped, just smaller.
     function fitLabelText(el) {
-      const maxFont = 13, minFont = 7, step = 0.5;
+      const maxFont = 11, minFont = 6, step = 0.5;
       let font = maxFont;
       el.style.fontSize = font + 'px';
-      while (el.scrollHeight > el.clientHeight && font > minFont) {
+      while ((el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth) && font > minFont) {
         font -= step;
         el.style.fontSize = font + 'px';
       }
     }
 
-    function printLabels(items) {
+    function waitForImage(img, timeoutMs = 15000) {
+      if (!img || !img.src) return Promise.resolve(true);
+      if (img.complete) return Promise.resolve(img.naturalWidth > 0);
+      return new Promise(resolve => {
+        const timer = setTimeout(() => done(false), timeoutMs);
+        function done(ok) {
+          clearTimeout(timer);
+          img.onload = null;
+          img.onerror = null;
+          resolve(ok);
+        }
+        img.onload = () => done(true);
+        img.onerror = () => done(false);
+      });
+    }
+
+    async function waitForPrintImages(area) {
+      const images = Array.from(area.querySelectorAll('img'));
+      if (images.length === 0) return true;
+      const results = await Promise.all(images.map(img => waitForImage(img)));
+      return results.every(Boolean);
+    }
+
+    function nextPaint() {
+      return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    }
+
+    async function printLabels(items) {
       if (!items || items.length === 0) return;
       const area = document.getElementById('printArea');
+      applyQrLabelLayout(area);
       area.innerHTML = items.map(buildLabelHtml).join('');
       area.querySelectorAll('.pl-text').forEach(fitLabelText);
+      Swal.fire({
+        title: 'กำลังเตรียม QR Code',
+        text: 'กรุณารอสักครู่ก่อนเปิดหน้าต่างพิมพ์',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => Swal.showLoading()
+      });
+      const loaded = await waitForPrintImages(area);
+      await nextPaint();
+      Swal.close();
+      if (!loaded) {
+        const result = await Swal.fire({
+          icon: 'warning',
+          title: 'โหลด QR Code ไม่ครบ',
+          text: 'บางรายการอาจยังไม่แสดง QR ต้องการพิมพ์ต่อหรือไม่?',
+          showCancelButton: true,
+          confirmButtonText: 'พิมพ์ต่อ',
+          cancelButtonText: 'ยกเลิก'
+        });
+        if (!result.isConfirmed) {
+          area.innerHTML = '';
+          clearQrLabelLayout(area);
+          return;
+        }
+      }
       window.print();
     }
 
@@ -4037,7 +4233,9 @@
     }
 
     window.addEventListener('afterprint', () => {
-      document.getElementById('printArea').innerHTML = '';
+      const area = document.getElementById('printArea');
+      area.innerHTML = '';
+      clearQrLabelLayout(area);
     });
 
     // Draws the QR code plus its item name + id onto a canvas, so a
@@ -4073,14 +4271,14 @@
           resolve(canvas);
         };
         img.onerror = () => reject(new Error('โหลดรูป QR ไม่สำเร็จ'));
-        img.src = asset.qrcode;
+        img.src = getAssetQrImageUrl(asset);
       });
     }
 
     // Opens the labeled QR (see above) in a new tab, in place of the old bare
     // QR-only link.
     async function openQrFullView(asset) {
-      if (!asset || !asset.qrcode) return;
+      if (!asset || !getAssetQrImageUrl(asset)) return;
       try {
         const canvas = await buildLabeledQrCanvas(asset);
         canvas.toBlob(blob => {
@@ -4093,7 +4291,7 @@
     }
 
     async function downloadQrPng() {
-      if (!currentViewAsset || !currentViewAsset.qrcode) return;
+      if (!currentViewAsset || !getAssetQrImageUrl(currentViewAsset)) return;
       try {
         const canvas = await buildLabeledQrCanvas(currentViewAsset);
         canvas.toBlob(blob => {
@@ -4210,7 +4408,7 @@
         descWrap.classList.add('hidden');
       }
 
-      document.getElementById('v-qr').src = a.qrcode;
+      document.getElementById('v-qr').src = getAssetQrImageUrl(a);
 
       // Borrow/Return button + info visibility
       const blockedBorrow = ['จำหน่ายแล้ว', 'สูญหาย', 'ชำรุด', 'ส่งซ่อม'];
