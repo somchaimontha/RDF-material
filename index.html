@@ -741,6 +741,9 @@
           <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
           <input type="text" id="searchInput" placeholder="ค้นหาชื่อ, รหัส, สถานที่..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-blue-500 outline-none" onkeyup="filterAssets(); syncGlobalSearch();">
         </div>
+        <select id="dormFilter" class="hidden border rounded-lg px-4 py-2 bg-white" onchange="setDormFilter(this.value)">
+          <option value="">ทุกหอพัก</option>
+        </select>
         <select id="catFilter" class="border rounded-lg px-4 py-2 bg-white" onchange="filterAssets()">
           <option value="">ทุกหมวดหมู่</option>
           <option value="electrical">อุปกรณ์ไฟฟ้า/อิเล็กทรอนิกส์</option>
@@ -915,6 +918,10 @@
           </div>
 
           <div>
+            <label class="block text-sm font-medium mb-1">หอพัก <span class="text-red-500">*</span></label>
+            <select id="addDorm" required class="w-full border rounded-lg px-4 py-2 bg-white"></select>
+          </div>
+          <div>
             <label class="block text-sm font-medium mb-1">สถานที่ติดตั้ง/เก็บ <span class="text-red-500">*</span></label>
             <input type="text" id="addLoc" required class="w-full border rounded-lg px-4 py-2" placeholder="เช่น หอหญิง ห้อง 102">
           </div>
@@ -988,6 +995,10 @@
               <p class="font-semibold text-gray-900" id="v-date">-</p>
             </div>
             <div>
+              <p class="text-gray-500">หอพัก</p>
+              <p class="font-semibold text-gray-900" id="v-dorm">-</p>
+            </div>
+            <div>
               <p class="text-gray-500">สถานที่</p>
               <p class="font-semibold text-gray-900" id="v-loc">-</p>
             </div>
@@ -1058,10 +1069,10 @@
             <button id="btn-return" onclick="openReturnModal()" class="hidden col-span-2 btn btn-teal">
               <i class="fas fa-undo"></i> คืนของ
             </button>
-            <button onclick="openStatusModal()" class="col-span-2 btn btn-neutral">
+            <button id="btn-status" onclick="openStatusModal()" class="col-span-2 btn btn-neutral">
               <i class="fas fa-edit"></i> อัปเดตสถานะ (แจ้งซ่อม/ชำรุด)
             </button>
-            <button onclick="openEditModal()" class="btn btn-gold-soft">
+            <button id="btn-edit" onclick="openEditModal()" class="btn btn-gold-soft">
               <i class="fas fa-pen"></i> แก้ไขข้อมูล
             </button>
             <button id="btn-delete" onclick="confirmDeleteAsset()" class="hidden btn btn-coral-soft">
@@ -1241,6 +1252,10 @@
           <input type="text" id="eMoneyOther" class="hidden w-full border rounded-lg px-4 py-2 mt-2" placeholder="ระบุแหล่งเงิน">
         </div>
         <div>
+          <label class="block text-sm font-medium mb-1">หอพัก</label>
+          <select id="eDorm" class="w-full border rounded-lg px-4 py-2 bg-white"></select>
+        </div>
+        <div>
           <label class="block text-sm font-medium mb-1">สถานที่ติดตั้ง/เก็บ</label>
           <input type="text" id="eLoc" class="w-full border rounded-lg px-4 py-2">
         </div>
@@ -1375,9 +1390,15 @@
             <input type="password" id="newStaffPassword" placeholder="รหัสผ่าน (≥10 ตัว, พิมพ์เล็ก/ใหญ่/ตัวเลข/สัญลักษณ์)" class="border rounded-lg px-3 py-2 text-sm">
             <select id="newStaffRole" class="border rounded-lg px-3 py-2 text-sm bg-white">
               <option value="staff">เจ้าหน้าที่ (staff)</option>
+              <option value="manager">ผู้จัดการ (manager)</option>
               <option value="admin">ผู้ดูแลระบบ (admin)</option>
             </select>
             <input type="email" id="newStaffEmail" placeholder="อีเมล (ไม่บังคับ — สำหรับ Google Sign-In)" class="border rounded-lg px-3 py-2 text-sm col-span-2">
+          </div>
+          <div id="newStaffDorms" class="mt-3 rounded-lg border p-3 text-sm">
+            <div class="font-semibold mb-2">สิทธิ์หอพัก</div>
+            <label class="flex items-center gap-2 mb-1"><input type="checkbox" class="new-staff-dorm" value="Maesariang Boribhatsuksa" checked> Maesariang Boribhatsuksa</label>
+            <label class="flex items-center gap-2"><input type="checkbox" class="new-staff-dorm" value="Maesariang Vocational"> Maesariang Vocational</label>
           </div>
           <button onclick="submitCreateStaff()" class="btn btn-teal btn-block mt-2">เพิ่มบัญชี</button>
         </div>
@@ -1738,6 +1759,54 @@
       return JSON.stringify(String(value === null || value === undefined ? '' : value));
     }
 
+    function getSessionAllowedDorms(session) {
+      if (!session) return [];
+      if (session.role === 'admin') return DORMITORIES.slice();
+      if (Array.isArray(session.allowedDorms) && session.allowedDorms.length) {
+        return session.allowedDorms.filter(d => DORMITORIES.includes(d));
+      }
+      return DORMITORIES.slice();
+    }
+
+    function getDefaultDorm(session) {
+      const allowed = getSessionAllowedDorms(session);
+      return allowed.includes(session?.defaultDorm) ? session.defaultDorm : (allowed[0] || DORMITORIES[0]);
+    }
+
+    function renderDormOptions(selectEl, value, includeAll) {
+      if (!selectEl) return;
+      const session = currentSession || loadCachedSession();
+      const allowed = getSessionAllowedDorms(session);
+      const selected = value || (includeAll ? activeDormFilter : getDefaultDorm(session));
+      const allOption = includeAll && allowed.length > 1 ? '<option value="">ทุกหอพัก</option>' : '';
+      selectEl.innerHTML = allOption + allowed.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+      selectEl.value = allowed.includes(selected) ? selected : (includeAll ? '' : (allowed[0] || ''));
+      selectEl.disabled = !includeAll && allowed.length <= 1;
+    }
+
+    function syncDormControls() {
+      const session = currentSession || loadCachedSession();
+      const allowed = getSessionAllowedDorms(session);
+      if (allowed.length && activeDormFilter && !allowed.includes(activeDormFilter)) {
+        activeDormFilter = '';
+        localStorage.removeItem('rdf_active_dorm');
+      }
+      const filter = document.getElementById('dormFilter');
+      if (filter) {
+        renderDormOptions(filter, activeDormFilter, true);
+        filter.classList.toggle('hidden', allowed.length <= 1);
+      }
+      renderDormOptions(document.getElementById('addDorm'), getDefaultDorm(session), false);
+    }
+
+    function setDormFilter(value) {
+      activeDormFilter = value || '';
+      if (activeDormFilter) localStorage.setItem('rdf_active_dorm', activeDormFilter);
+      else localStorage.removeItem('rdf_active_dorm');
+      clearSelection();
+      filterAssets();
+    }
+
     const CATEGORY_LABELS = {
       electrical: 'ไฟฟ้า/อิเล็กทรอนิกส์', furniture: 'เฟอร์นิเจอร์', it: 'ไอที/เครือข่าย',
       cleaning: 'ทำความสะอาด', sports: 'กีฬา', kitchen: 'เครื่องครัว', others: 'อื่นๆ'
@@ -1746,6 +1815,8 @@
       electrical: 'fa-bolt', furniture: 'fa-couch', it: 'fa-network-wired',
       cleaning: 'fa-broom', sports: 'fa-basketball', kitchen: 'fa-utensils', others: 'fa-box'
     };
+    const DORMITORIES = ['Maesariang Boribhatsuksa', 'Maesariang Vocational'];
+    let activeDormFilter = localStorage.getItem('rdf_active_dorm') || '';
 
     // ========== QR LABEL FIELD SETTINGS ==========
     // Which asset fields print on a QR label, and in what order. User-picked,
@@ -1753,6 +1824,7 @@
     const QR_FIELD_DEFS = [
       { key: 'itemName',    label: 'ชื่อรายการ' },
       { key: 'inventoryId', label: 'รหัสครุภัณฑ์' },
+      { key: 'dormitory',   label: 'หอพัก' },
       { key: 'location',    label: 'สถานที่' },
       { key: 'category',    label: 'หมวดหมู่' },
       { key: 'purchaseDate',label: 'วันที่ซื้อ' },
@@ -2110,10 +2182,11 @@
     function getQrPrintRows() {
       const search = (document.getElementById('qrPrintSearch')?.value || '').toLowerCase();
       const status = document.getElementById('qrPrintStatus')?.value || '';
+      const dormF = document.getElementById('dormFilter')?.value || '';
       return allAssets.filter(a => {
-        const haystack = [a.inventoryId, a.itemName, a.location, a.sourceOfMoney, CATEGORY_LABELS[a.category] || a.category]
+        const haystack = [a.inventoryId, a.itemName, a.dormitory, a.location, a.sourceOfMoney, CATEGORY_LABELS[a.category] || a.category]
           .join(' ').toLowerCase();
-        return (!status || a.status === status) && (!search || haystack.includes(search));
+        return (!status || a.status === status) && (!dormF || a.dormitory === dormF) && (!search || haystack.includes(search));
       });
     }
 
@@ -2532,7 +2605,7 @@
         loginBtn.classList.add('hidden');
         if (userWrap) userWrap.classList.remove('hidden');
         if (mLoginBtn) mLoginBtn.classList.add('hidden');
-        const roleLabel = session.role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่';
+        const roleLabel = getRoleLabel(session.role);
         const full = session.displayName + ' (' + roleLabel + ')';
         if (nameEl) nameEl.innerText = full;
         if (mName) mName.innerText = full;
@@ -2547,6 +2620,7 @@
         if (sideRole) sideRole.innerText = 'Guest';
         adminBtns.forEach(b => b.classList.add('hidden'));
       }
+      syncDormControls();
     }
 
     // Opens/closes the desktop user dropdown. Toggles the caret direction too.
@@ -2922,6 +2996,7 @@
       const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(l => l.length);
       const catByLabel = {};
       Object.keys(CATEGORY_LABELS).forEach(k => { catByLabel[CATEGORY_LABELS[k]] = k; });
+      const importDormitory = activeDormFilter || getDefaultDorm(currentSession || loadCachedSession());
       const items = [];
       const errors = [];
       lines.forEach((line, i) => {
@@ -2939,7 +3014,8 @@
           sourceOfMoney: sourceOfMoney || '', location: location || '',
           purchaseDate: purchaseDate || '', buyerName: buyerName || '',
           installer: installer || '', note: note || '', description: description || '',
-          inventoryId: inventoryId || ''
+          inventoryId: inventoryId || '',
+          dormitory: importDormitory
         });
       });
       return { items, errors };
@@ -3343,11 +3419,15 @@
           <div class="flex items-center justify-between text-sm border rounded-lg px-3 py-2">
             <div>
               <div class="font-semibold">${escapeHtml(s.displayName)} <span class="text-gray-400 font-normal">(${escapeHtml(s.username)})</span></div>
-              <div class="text-xs text-gray-500">${s.role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่'} · ${s.status === 'active' ? 'ใช้งานอยู่' : 'ปิดใช้งาน'}${s.email ? ' · ' + escapeHtml(s.email) : ''}</div>
+              <div class="text-xs text-gray-500">${getRoleLabel(s.role)} · ${s.status === 'active' ? 'ใช้งานอยู่' : 'ปิดใช้งาน'}${s.email ? ' · ' + escapeHtml(s.email) : ''}</div>
+              <div class="text-xs text-gray-400">${escapeHtml(formatDormList(s.allowedDorms, s.role))}</div>
             </div>
-            <button onclick="toggleStaffStatus(${jsString(s.username)}, ${jsString(s.status)})" class="text-xs px-3 py-1.5 rounded-full ${s.status === 'active' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">
-              ${s.status === 'active' ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
-            </button>
+            <div class="flex flex-col gap-1">
+              <button onclick="openStaffAccessEditor(${jsString(s.username)}, ${jsString(s.role)}, ${jsString(s.allowedDorms || '')}, ${jsString(s.defaultDorm || '')})" class="text-xs px-3 py-1.5 rounded-full bg-blue-50 text-blue-700">สิทธิ์</button>
+              <button onclick="toggleStaffStatus(${jsString(s.username)}, ${jsString(s.status)})" class="text-xs px-3 py-1.5 rounded-full ${s.status === 'active' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">
+                ${s.status === 'active' ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
+              </button>
+            </div>
           </div>
         `).join('') || '<p class="text-sm text-gray-400">ไม่มีบัญชี</p>';
       } catch (err) {
@@ -3356,16 +3436,91 @@
       }
     }
 
+    function getRoleLabel(role) {
+      if (role === 'admin') return 'ผู้ดูแลระบบ';
+      if (role === 'manager') return 'ผู้จัดการ';
+      return 'เจ้าหน้าที่';
+    }
+
+    function formatDormList(allowedDorms, role) {
+      if (role === 'admin' || allowedDorms === '*') return 'ทุกหอพัก';
+      const list = Array.isArray(allowedDorms)
+        ? allowedDorms
+        : String(allowedDorms || '').split(',').map(s => s.trim()).filter(Boolean);
+      return list.length ? list.join(', ') : 'ทุกหอพัก';
+    }
+
+    function getCheckedStaffDorms() {
+      return Array.from(document.querySelectorAll('.new-staff-dorm:checked')).map(el => el.value);
+    }
+
+    async function openStaffAccessEditor(username, role, allowedDormsRaw, defaultDorm) {
+      const selectedDorms = role === 'admin' || allowedDormsRaw === '*'
+        ? DORMITORIES.slice()
+        : String(allowedDormsRaw || '').split(',').map(s => s.trim()).filter(Boolean);
+      const dormChecks = DORMITORIES.map(d => `
+        <label class="flex items-center gap-2 text-left py-1">
+          <input type="checkbox" class="swal-staff-dorm" value="${escapeHtml(d)}" ${selectedDorms.includes(d) ? 'checked' : ''}>
+          <span>${escapeHtml(d)}</span>
+        </label>
+      `).join('');
+      const result = await Swal.fire({
+        title: 'แก้สิทธิ์ผู้ใช้',
+        html: `
+          <div class="text-left space-y-3">
+            <div class="text-sm font-semibold">${escapeHtml(username)}</div>
+            <label class="block text-xs text-gray-500">บทบาท</label>
+            <select id="swalStaffRole" class="swal2-input" style="width:100%; margin:0;">
+              <option value="staff" ${role === 'staff' ? 'selected' : ''}>เจ้าหน้าที่</option>
+              <option value="manager" ${role === 'manager' ? 'selected' : ''}>ผู้จัดการ</option>
+              <option value="admin" ${role === 'admin' ? 'selected' : ''}>ผู้ดูแลระบบ</option>
+            </select>
+            <div class="rounded border p-3">${dormChecks}</div>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'บันทึก',
+        cancelButtonText: 'ยกเลิก',
+        preConfirm: () => {
+          const nextRole = document.getElementById('swalStaffRole').value;
+          const allowed = Array.from(document.querySelectorAll('.swal-staff-dorm:checked')).map(el => el.value);
+          if (nextRole !== 'admin' && allowed.length === 0) {
+            Swal.showValidationMessage('กรุณาเลือกหอพักอย่างน้อย 1 แห่ง');
+            return false;
+          }
+          return { role: nextRole, allowedDorms: allowed, defaultDorm: allowed[0] || defaultDorm || DORMITORIES[0] };
+        }
+      });
+      if (!result.isConfirmed) return;
+      showLoading(true);
+      try {
+        await callServer('setStaffAccess', { username, ...result.value });
+        showLoading(false);
+        await refreshStaffList();
+        Swal.fire('สำเร็จ', 'อัปเดตสิทธิ์ผู้ใช้เรียบร้อย', 'success');
+      } catch (err) {
+        showLoading(false);
+        Swal.fire('ข้อผิดพลาด', err.message, 'error');
+      }
+    }
+
     async function submitCreateStaff() {
+      const allowedDorms = getCheckedStaffDorms();
       const payload = {
         username: document.getElementById('newStaffUsername').value.trim(),
         displayName: document.getElementById('newStaffDisplayName').value.trim(),
         password: document.getElementById('newStaffPassword').value,
         role: document.getElementById('newStaffRole').value,
-        email: document.getElementById('newStaffEmail').value.trim()
+        email: document.getElementById('newStaffEmail').value.trim(),
+        allowedDorms: allowedDorms,
+        defaultDorm: allowedDorms[0] || DORMITORIES[0]
       };
       if (!payload.username || !payload.displayName || !payload.password) {
         Swal.fire('กรอกข้อมูลไม่ครบ', 'กรุณากรอกชื่อผู้ใช้ ชื่อที่แสดง และรหัสผ่าน', 'warning');
+        return;
+      }
+      if (payload.role !== 'admin' && allowedDorms.length === 0) {
+        Swal.fire('กรอกข้อมูลไม่ครบ', 'กรุณาเลือกหอพักอย่างน้อย 1 แห่ง', 'warning');
         return;
       }
       showLoading(true);
@@ -3373,6 +3528,7 @@
         await callServer('createStaffAccount', payload);
         showLoading(false);
         ['newStaffUsername', 'newStaffDisplayName', 'newStaffPassword', 'newStaffEmail'].forEach(id => document.getElementById(id).value = '');
+        document.querySelectorAll('.new-staff-dorm').forEach((el, i) => el.checked = i === 0);
         Swal.fire('สำเร็จ', 'เพิ่มบัญชีเรียบร้อย', 'success');
         refreshStaffList();
       } catch (err) {
@@ -3767,12 +3923,14 @@
       const search = document.getElementById('searchInput').value.toLowerCase();
       const statusF = document.getElementById('statusFilter').value;
       const catF = document.getElementById('catFilter').value;
+      const dormF = document.getElementById('dormFilter')?.value || '';
 
       const filtered = allAssets.filter(a => {
         const searchable = [
           a.itemName,
           a.inventoryId,
           a.location,
+          a.dormitory,
           a.sourceOfMoney,
           a.buyerName,
           a.currentBorrower,
@@ -3782,7 +3940,8 @@
         const matchSearch = !search || searchable.includes(search);
         const matchStatus = !statusF || a.status === statusF;
         const matchCat = !catF || a.category === catF;
-        return matchSearch && matchStatus && matchCat;
+        const matchDorm = !dormF || a.dormitory === dormF;
+        return matchSearch && matchStatus && matchCat && matchDorm;
       });
       document.getElementById('resultCount').innerText = `แสดง ${filtered.length} จาก ${allAssets.length} รายการ`;
       lastFilteredAssets = filtered; // so export (CSV/PDF) exports exactly what's on screen
@@ -3828,6 +3987,10 @@
     function clearFilters() {
       document.getElementById('statusFilter').value = '';
       document.getElementById('catFilter').value = '';
+      const dorm = document.getElementById('dormFilter');
+      if (dorm) dorm.value = '';
+      activeDormFilter = '';
+      localStorage.removeItem('rdf_active_dorm');
       document.getElementById('searchInput').value = '';
       syncGlobalSearch();
       filterAssets();
@@ -3890,6 +4053,7 @@
             <a href="${WEBAPP_URL}?action=viewItem&id=${idUrl}" onclick="event.preventDefault(); openAssetDetailModal(${idJs})" class="flex-1 min-w-0">
               <div class="font-bold text-sm truncate" style="color:var(--teal-dark)">${escapeHtml(a.inventoryId)}</div>
               <div class="text-sm text-gray-800 truncate">${escapeHtml(a.itemName)}</div>
+              <div class="text-xs text-gray-500 truncate">${escapeHtml(a.dormitory || 'ยังไม่ระบุหอพัก')}</div>
               <div class="text-xs text-gray-500 truncate">${escapeHtml(a.location || '')}</div>
               <div class="text-[11px] text-gray-400">คงเหลือ ${a._availableQuantity.toLocaleString()}/${a._totalQuantity.toLocaleString()} ${escapeHtml(a.unit || 'ชิ้น')}</div>
             </a>
@@ -3926,6 +4090,7 @@
               ${isOverdue ? `<div class="text-[10px] font-bold mt-0.5" style="color:var(--error)">เกินกำหนดคืน</div>` : ''}
             </td>
             <td class="py-2 pr-3 whitespace-nowrap text-gray-600">${a._availableQuantity.toLocaleString()}/${a._totalQuantity.toLocaleString()} ${escapeHtml(a.unit || 'ชิ้น')}</td>
+            <td class="py-2 pr-3 max-w-[170px] truncate text-gray-600" title="${escapeHtml(a.dormitory || '')}">${escapeHtml(a.dormitory || 'ยังไม่ระบุ')}</td>
             <td class="py-2 pr-3 max-w-[160px] truncate text-gray-600" title="${escapeHtml(a.location || '')}">${escapeHtml(a.location || '-')}</td>
             <td class="py-2 pr-3 text-right whitespace-nowrap">${a.price ? parseFloat(a.price).toLocaleString() + ' บ.' : '-'}</td>
             <td class="py-2 pl-1 text-right">
@@ -3945,6 +4110,7 @@
                 <th class="py-2 pr-3 font-medium">หมวดหมู่</th>
                 <th class="py-2 pr-3 font-medium">สถานะ</th>
                 <th class="py-2 pr-3 font-medium">คงเหลือ</th>
+                <th class="py-2 pr-3 font-medium">หอพัก</th>
                 <th class="py-2 pr-3 font-medium">สถานที่</th>
                 <th class="py-2 pr-3 font-medium text-right">ราคา</th>
                 <th class="py-2 pl-1 font-medium"></th>
@@ -3966,12 +4132,12 @@
     function exportAssetsCsv() {
       const rows = lastFilteredAssets;
       if (!rows.length) { Swal.fire('ไม่มีข้อมูล', 'ไม่มีรายการที่จะส่งออกในตัวกรองปัจจุบัน', 'info'); return; }
-      const headers = ['รหัส', 'ชื่อรายการ', 'หมวดหมู่', 'สถานะ', 'จำนวน', 'หน่วย', 'ราคา', 'แหล่งเงิน', 'สถานที่', 'ผู้จัดซื้อ', 'วันที่จัดซื้อ', 'คำอธิบาย/รายละเอียด', 'หมายเหตุ'];
+      const headers = ['รหัส', 'ชื่อรายการ', 'หมวดหมู่', 'สถานะ', 'จำนวน', 'หน่วย', 'ราคา', 'แหล่งเงิน', 'หอพัก', 'สถานที่', 'ผู้จัดซื้อ', 'วันที่จัดซื้อ', 'คำอธิบาย/รายละเอียด', 'หมายเหตุ'];
       const lines = [headers.map(csvEscape).join(',')];
       rows.forEach(a => {
         lines.push([
           a.inventoryId, a.itemName, CATEGORY_LABELS[a.category] || a.category, a.status,
-          a.quantity, a.unit, a.price, a.sourceOfMoney, a.location, a.buyerName, a.purchaseDate,
+          a.quantity, a.unit, a.price, a.sourceOfMoney, a.dormitory, a.location, a.buyerName, a.purchaseDate,
           a.description, a.note
         ].map(csvEscape).join(','));
       });
@@ -4002,6 +4168,7 @@
           <td style="${cell}">${escapeHtml(a.itemName || '')}</td>
           <td style="${cell}">${escapeHtml(CATEGORY_LABELS[a.category] || a.category || '')}</td>
           <td style="${cell}">${escapeHtml(a.status || '')}</td>
+          <td style="${cell}">${escapeHtml(a.dormitory || 'ยังไม่ระบุ')}</td>
           <td style="${cell}">${escapeHtml(a.location || '-')}</td>
           <td style="${cell} text-align:right">${a.price ? parseFloat(a.price).toLocaleString() : '0'}</td>
         </tr>
@@ -4018,6 +4185,7 @@
                 <th style="${cell}">ชื่อรายการ</th>
                 <th style="${cell}">หมวดหมู่</th>
                 <th style="${cell}">สถานะ</th>
+                <th style="${cell}">หอพัก</th>
                 <th style="${cell}">สถานที่</th>
                 <th style="${cell}">ราคา (บ.)</th>
               </tr>
@@ -4333,6 +4501,7 @@
           unit: document.getElementById('addUnit').value,
           price: document.getElementById('addPrice').value,
           sourceOfMoney: getMoneySelectValue('addMoney'),
+          dormitory: document.getElementById('addDorm').value,
           location: document.getElementById('addLoc').value,
           buyerName: document.getElementById('addBuyer').value,
           installer: document.getElementById('addInstaller').value,
@@ -4350,6 +4519,7 @@
           Swal.fire('สำเร็จ', 'รหัส: ' + res.inventoryId, 'success');
           document.getElementById('addForm').reset();
           document.getElementById('addMoneyOther').classList.add('hidden');
+          syncDormControls();
           loadAssets();
           switchTab('dashboard');
         }
@@ -4393,6 +4563,7 @@
       document.getElementById('v-status').style.cssText = 'font-size:13px; padding:6px 14px;';
 
       document.getElementById('v-date').innerText = a.purchaseDate || '-';
+      document.getElementById('v-dorm').innerText = a.dormitory || 'ยังไม่ระบุ';
       document.getElementById('v-loc').innerText = a.location || '-';
       document.getElementById('v-price').innerText = a.price ? parseFloat(a.price).toLocaleString() + ' บ.' : '-';
       document.getElementById('v-buyer').innerText = a.buyerName || '-';
@@ -4411,14 +4582,17 @@
       document.getElementById('v-qr').src = getAssetQrImageUrl(a);
 
       // Borrow/Return button + info visibility
+      const canEditAsset = a.canEdit !== false && !!a._rowIndex;
       const blockedBorrow = ['จำหน่ายแล้ว', 'สูญหาย', 'ชำรุด', 'ส่งซ่อม'];
-      document.getElementById('btn-borrow').classList.toggle('hidden', blockedBorrow.includes(a.status) || a._availableQuantity <= 0);
-      document.getElementById('btn-return').classList.toggle('hidden', a._borrowedQuantity <= 0);
+      document.getElementById('btn-borrow').classList.toggle('hidden', !canEditAsset || blockedBorrow.includes(a.status) || a._availableQuantity <= 0);
+      document.getElementById('btn-return').classList.toggle('hidden', !canEditAsset || a._borrowedQuantity <= 0);
+      document.getElementById('btn-status').classList.toggle('hidden', !canEditAsset);
+      document.getElementById('btn-edit').classList.toggle('hidden', !canEditAsset);
 
       // Deleting is admin-only on the backend — hide the button entirely for
       // anyone else instead of letting them hit a permission error.
       const activeSession = currentSession || loadCachedSession();
-      document.getElementById('btn-delete').classList.toggle('hidden', !activeSession || activeSession.role !== 'admin');
+      document.getElementById('btn-delete').classList.toggle('hidden', !canEditAsset || !activeSession || activeSession.role !== 'admin');
       const borrowInfo = document.getElementById('v-borrow-info');
       if (a.status === 'ถูกยืมอยู่') {
         document.getElementById('v-borrower').innerText = a.currentBorrower || '-';
@@ -4680,6 +4854,7 @@
       document.getElementById('eUnit').value = a.unit || '';
       document.getElementById('ePrice').value = a.price || 0;
       loadFundingSources().then(() => renderFundingSourceOptions(document.getElementById('eMoney'), a.sourceOfMoney || ''));
+      renderDormOptions(document.getElementById('eDorm'), a.dormitory || getDefaultDorm(currentSession || loadCachedSession()), false);
       document.getElementById('eLoc').value = a.location || '';
       document.getElementById('eBuyer').value = a.buyerName || '';
       document.getElementById('eInstaller').value = a.installer || '';
@@ -4714,6 +4889,7 @@
           unit: document.getElementById('eUnit').value,
           price: document.getElementById('ePrice').value,
           sourceOfMoney: getMoneySelectValue('eMoney'),
+          dormitory: document.getElementById('eDorm').value,
           location: document.getElementById('eLoc').value,
           buyerName: document.getElementById('eBuyer').value,
           installer: document.getElementById('eInstaller').value,
