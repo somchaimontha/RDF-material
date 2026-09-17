@@ -200,6 +200,10 @@ GitHub Pages (index.html)  --fetch()-->  Apps Script /exec (JSON API)  --> Googl
     - หน้าตั้งค่าเพิ่มหรือปิดใช้งานสถานที่แยกตามหอพักได้; หน้าเพิ่มและแก้ไขครุภัณฑ์
       แสดงคำแนะนำตามหอพักที่เลือก แต่ยังพิมพ์สถานที่ใหม่ได้
     - โหลดและ cache รายการสถานที่หลังเข้าสู่ระบบ จึงไม่ต้องเปิดหน้าตั้งค่าก่อนจึงจะเห็นคำแนะนำ
+    - Deploy backend ขึ้น Apps Script deployment เดิมสำเร็จเป็น v34
+      (`Location options autocomplete and management`) โดย URL API และ QR เดิมยังใช้งานได้
+    - เผยแพร่ frontend และบันทึกนี้ขึ้น GitHub `main` สำเร็จที่ commit `5f105f1`
+      (`Finish location option management`) เพื่อให้ GitHub Pages รับเวอร์ชันล่าสุด
 11. **คลิกดูรายละเอียดจาก Dashboard เป็น popup ในหน้าเดียวกัน** แทนการเปิดแท็บใหม่
 12. **แก้บั๊กรหัสครุภัณฑ์ (`inventoryId`)**:
     - แก้บั๊ก "falsy zero" ใน `regenerateAllQrCodes` ที่ทำให้รหัส `"0"` ถูกข้ามไม่สร้าง QR
