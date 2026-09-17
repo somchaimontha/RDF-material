@@ -919,11 +919,12 @@
 
           <div>
             <label class="block text-sm font-medium mb-1">หอพัก <span class="text-red-500">*</span></label>
-            <select id="addDorm" required class="w-full border rounded-lg px-4 py-2 bg-white"></select>
+            <select id="addDorm" required class="w-full border rounded-lg px-4 py-2 bg-white" onchange="renderLocationDatalist('addLocationOptions', this.value)"></select>
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">สถานที่ติดตั้ง/เก็บ <span class="text-red-500">*</span></label>
-            <input type="text" id="addLoc" required class="w-full border rounded-lg px-4 py-2" placeholder="เช่น หอหญิง ห้อง 102">
+            <input type="text" id="addLoc" list="addLocationOptions" required class="w-full border rounded-lg px-4 py-2" placeholder="เช่น หอหญิง ห้อง 102">
+            <datalist id="addLocationOptions"></datalist>
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">ผู้ซื้อ/ผู้รับผิดชอบ</label>
@@ -1253,11 +1254,12 @@
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">หอพัก</label>
-          <select id="eDorm" class="w-full border rounded-lg px-4 py-2 bg-white"></select>
+          <select id="eDorm" class="w-full border rounded-lg px-4 py-2 bg-white" onchange="renderLocationDatalist('editLocationOptions', this.value)"></select>
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">สถานที่ติดตั้ง/เก็บ</label>
-          <input type="text" id="eLoc" class="w-full border rounded-lg px-4 py-2">
+          <input type="text" id="eLoc" list="editLocationOptions" class="w-full border rounded-lg px-4 py-2">
+          <datalist id="editLocationOptions"></datalist>
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">ผู้ซื้อ/ผู้รับผิดชอบ</label>
@@ -1423,6 +1425,16 @@
           <div class="flex gap-2">
             <input type="text" id="newFundingSourceName" placeholder="เช่น เงินบริจาค" class="flex-1 border rounded-lg px-3 py-2 text-sm">
             <button onclick="submitAddFundingSource()" class="btn btn-teal" style="padding:0 16px;">เพิ่ม</button>
+          </div>
+        </div>
+        <div class="border-t pt-3">
+          <h4 class="font-semibold text-sm mb-1">สถานที่ / ส่วนย่อย</h4>
+          <p class="text-xs text-gray-500 mb-2">รายการที่แสดงในช่อง "สถานที่ติดตั้ง/เก็บ" แยกตามหอพัก เพิ่มหรือปิดใช้งานได้ที่นี่</p>
+          <div id="locationOptionList" class="space-y-2 mb-2"><!-- injected --></div>
+          <div class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
+            <select id="newLocationDorm" class="border rounded-lg px-3 py-2 text-sm bg-white"></select>
+            <input type="text" id="newLocationName" placeholder="เช่น อาคาร A / ห้องครัว / ห้อง 102" class="border rounded-lg px-3 py-2 text-sm">
+            <button onclick="submitAddLocationOption()" class="btn btn-teal" style="padding:0 16px;">เพิ่ม</button>
           </div>
         </div>
         <div class="border-t pt-3">
@@ -1797,6 +1809,11 @@
         filter.classList.toggle('hidden', allowed.length <= 1);
       }
       renderDormOptions(document.getElementById('addDorm'), getDefaultDorm(session), false);
+      renderLocationDatalist('addLocationOptions', document.getElementById('addDorm')?.value || '');
+      // Suggestions are optional: keep the location field usable as free text
+      // if the API is temporarily unavailable, but populate it as soon as an
+      // authenticated session is available.
+      if (session) loadLocationOptions().catch(() => {});
     }
 
     function setDormFilter(value) {
@@ -1833,7 +1850,7 @@
       { key: 'buyerName',   label: 'ผู้รับผิดชอบ' }
     ];
     const QR_FIELDS_STORAGE_KEY = 'rdf_qr_fields';
-    const QR_FIELDS_DEFAULT = ['itemName', 'inventoryId', 'location'];
+    const QR_FIELDS_DEFAULT = ['itemName', 'inventoryId', 'dormitory', 'location'];
     const QR_LABEL_LAYOUT_STORAGE_KEY = 'rdf_qr_label_layout';
     const QR_LABEL_LAYOUT_DEFAULT = { widthMm: 70, heightMm: 36, paddingMm: 3 };
 
@@ -2776,6 +2793,7 @@
     async function openSettingsModal() {
       document.getElementById('settingsModal').classList.remove('hidden');
       await refreshFundingSourceList();
+      await refreshLocationOptionList();
       try {
         const settings = await callApi('getSystemSettings', {}, true);
         document.getElementById('googleClientIdInput').value = settings.googleClientId || '';
@@ -2826,6 +2844,102 @@
         await callServer('setFundingSourceStatus', { name, status: newStatus });
         showLoading(false);
         refreshFundingSourceList();
+      } catch (err) {
+        showLoading(false);
+        Swal.fire('ข้อผิดพลาด', err.message, 'error');
+      }
+    }
+
+    let locationOptions = [];
+    let locationOptionsLoaded = false;
+    let locationOptionsLoadPromise = null;
+
+    function renderAllLocationDatalists() {
+      renderLocationDatalist('addLocationOptions', document.getElementById('addDorm')?.value || '');
+      renderLocationDatalist('editLocationOptions', document.getElementById('eDorm')?.value || '');
+    }
+
+    async function loadLocationOptions(force) {
+      if (!force && locationOptionsLoaded) return locationOptions;
+      if (!force && locationOptionsLoadPromise) return locationOptionsLoadPromise;
+
+      const request = callServer('getLocationOptions', {})
+        .then(items => {
+          locationOptions = Array.isArray(items) ? items : [];
+          locationOptionsLoaded = true;
+          renderAllLocationDatalists();
+          return locationOptions;
+        })
+        .catch(err => {
+          locationOptions = [];
+          locationOptionsLoaded = false;
+          throw err;
+        })
+        .finally(() => {
+          if (locationOptionsLoadPromise === request) locationOptionsLoadPromise = null;
+        });
+      locationOptionsLoadPromise = request;
+      return request;
+    }
+
+    function renderLocationDatalist(datalistId, dormitory) {
+      const list = document.getElementById(datalistId);
+      if (!list) return;
+      const names = locationOptions
+        .filter(item => item.status === 'active')
+        .filter(item => !item.dormitory || !dormitory || item.dormitory === dormitory)
+        .map(item => item.name)
+        .filter((name, index, arr) => name && arr.indexOf(name) === index)
+        .sort((a, b) => a.localeCompare(b, 'th'));
+      list.innerHTML = names.map(name => `<option value="${escapeHtml(name)}"></option>`).join('');
+    }
+
+    async function refreshLocationOptionList() {
+      const container = document.getElementById('locationOptionList');
+      const dormSelect = document.getElementById('newLocationDorm');
+      renderDormOptions(dormSelect, getDefaultDorm(currentSession || loadCachedSession()), false);
+      try {
+        await loadLocationOptions(true);
+        container.innerHTML = locationOptions.map(item => `
+          <div class="flex items-center justify-between gap-3 text-sm border rounded-lg px-3 py-2">
+            <span class="min-w-0">
+              <b class="block truncate">${escapeHtml(item.name)}</b>
+              <span class="text-xs text-gray-400">${escapeHtml(item.dormitory || 'ทุกหอพัก')}</span>
+            </span>
+            <button onclick="toggleLocationOptionStatus(${jsString(item.name)}, ${jsString(item.dormitory || '')}, ${jsString(item.status)})" class="text-xs px-3 py-1.5 rounded-full ${item.status === 'active' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">
+              ${item.status === 'active' ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
+            </button>
+          </div>
+        `).join('') || '<p class="text-sm text-gray-400">ยังไม่มีสถานที่</p>';
+      } catch (err) {
+        container.innerHTML = '';
+        Swal.fire('ข้อผิดพลาด', err.message, 'error');
+      }
+    }
+
+    async function submitAddLocationOption() {
+      const name = document.getElementById('newLocationName').value.trim();
+      const dormitory = document.getElementById('newLocationDorm').value;
+      if (!name) return;
+      showLoading(true);
+      try {
+        await callServer('addLocationOption', { name, dormitory });
+        showLoading(false);
+        document.getElementById('newLocationName').value = '';
+        await refreshLocationOptionList();
+      } catch (err) {
+        showLoading(false);
+        Swal.fire('ข้อผิดพลาด', err.message, 'error');
+      }
+    }
+
+    async function toggleLocationOptionStatus(name, dormitory, currentStatus) {
+      const newStatus = currentStatus === 'active' ? 'disabled' : 'active';
+      showLoading(true);
+      try {
+        await callServer('setLocationOptionStatus', { name, dormitory, status: newStatus });
+        showLoading(false);
+        await refreshLocationOptionList();
       } catch (err) {
         showLoading(false);
         Swal.fire('ข้อผิดพลาด', err.message, 'error');
@@ -4856,6 +4970,8 @@
       loadFundingSources().then(() => renderFundingSourceOptions(document.getElementById('eMoney'), a.sourceOfMoney || ''));
       renderDormOptions(document.getElementById('eDorm'), a.dormitory || getDefaultDorm(currentSession || loadCachedSession()), false);
       document.getElementById('eLoc').value = a.location || '';
+      renderLocationDatalist('editLocationOptions', document.getElementById('eDorm').value);
+      loadLocationOptions().catch(() => {});
       document.getElementById('eBuyer').value = a.buyerName || '';
       document.getElementById('eInstaller').value = a.installer || '';
       document.getElementById('eNote').value = a.note || '';
