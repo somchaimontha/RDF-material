@@ -223,7 +223,7 @@ GitHub Pages (index.html)  --fetch()-->  Apps Script /exec (JSON API)  --> Googl
 
 ## สถานะการ deploy (ล่าสุด)
 
-- ✅ `code.gs` deploy แล้ว เวอร์ชัน 34 (17 ก.ย. 2569) — อัปเดต P2.1 ยืม-คืนแบบแยกจำนวนบางส่วน,
+- ✅ `code.gs` deploy แล้ว เวอร์ชัน 36 (18 ก.ย. 2569) — อัปเดต P2.1 ยืม-คืนแบบแยกจำนวนบางส่วน,
   self-healing headers และระบบจัดการสถานที่/ส่วนย่อยผ่าน deployment เดิม
 - ✅ `index.html` push ขึ้น GitHub Pages แล้ว (ล่าสุด: popup รายละเอียดแสดงจำนวนทั้งหมด/ถูกยืม/คงเหลือ
   และ modal ยืม-คืนเลือกจำนวนได้)
