@@ -374,6 +374,9 @@
       --qr-image-size: 29.4mm;
     }
     .print-label {
+      --qr-label-font-family: 'Kanit', 'Leelawadee UI', 'Tahoma', sans-serif;
+      --qr-label-font-size: 10px;
+      --qr-label-text-color: #1E2A28;
       display: inline-flex;
       flex-direction: row;
       align-items: center;
@@ -388,6 +391,8 @@
       border: 0;
       border-radius: 0;
       overflow: hidden;
+      font-family: var(--qr-label-font-family);
+      color: var(--qr-label-text-color);
       break-inside: avoid;
       page-break-inside: avoid;
       vertical-align: top;
@@ -409,13 +414,13 @@
       justify-content: center;
       align-items: flex-start;
       overflow: hidden;
-      font-size: 10px;
+      font-size: var(--qr-label-font-size);
       line-height: 1.15;
     }
     .print-label .pl-text p { max-width: 100%; overflow-wrap: anywhere; }
     .print-label .pl-name { font-weight: 700; font-size: 1em; margin: 0; word-break: break-word; }
-    .print-label .pl-id { font-size: 0.82em; color: #555; margin: 0; }
-    .print-label .pl-loc { font-size: 0.72em; color: #777; margin: 0; }
+    .print-label .pl-id { font-size: 0.82em; color: inherit; opacity: .84; margin: 0; }
+    .print-label .pl-loc { font-size: 0.72em; color: inherit; opacity: .70; margin: 0; }
     @media print {
       @page { size: A4 portrait; margin: 10mm; }
       body > *:not(#printArea) { display: none !important; }
@@ -1683,6 +1688,32 @@
           </div>
           <p class="text-xs text-gray-400 mt-2">ค่าเริ่มต้นสำหรับ A4 แนวตั้ง: กว้าง 70mm, สูง 36mm, ขอบใน 3mm</p>
         </div>
+        <div class="mt-4 pt-4 border-t">
+          <h4 class="font-semibold text-sm mb-2">ตัวอักษรและชื่อหอพัก</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <label class="text-xs text-gray-500">
+              ตัวอักษร
+              <select id="qrLabelFontFamily" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm text-gray-800 bg-white">
+                <option value="kanit">Kanit</option>
+                <option value="leelawadee">Leelawadee UI</option>
+                <option value="tahoma">Tahoma</option>
+              </select>
+            </label>
+            <label class="text-xs text-gray-500">
+              ขนาด (px)
+              <input id="qrLabelFontSizePx" type="number" min="6" max="20" step="0.5" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm text-gray-800" inputmode="decimal">
+            </label>
+            <label class="text-xs text-gray-500">
+              สีตัวอักษร
+              <input id="qrLabelTextColor" type="color" class="w-full h-10 mt-1 px-1 py-1 border rounded-lg bg-white">
+            </label>
+          </div>
+          <label class="block text-xs text-gray-500 mt-3">
+            ชื่อหอพักบนป้าย
+            <input id="qrLabelDormitoryName" type="text" maxlength="100" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm text-gray-800" placeholder="เว้นว่างไว้เพื่อใช้ชื่อหอพักของแต่ละรายการ">
+          </label>
+          <p class="text-xs text-gray-400 mt-2">ชื่อที่ระบุจะใช้แทนข้อมูลหอพักในทุกป้าย เหมาะสำหรับพิมพ์เฉพาะหอเดียว; หากพิมพ์หลายหอ ให้เว้นว่างไว้</p>
+        </div>
       </div>
       <div class="p-4 border-t flex space-x-2">
         <button onclick="closeQrSettingsModal()" class="btn btn-neutral flex-1">ยกเลิก</button>
@@ -1853,6 +1884,13 @@
     const QR_FIELDS_DEFAULT = ['itemName', 'inventoryId', 'dormitory', 'location'];
     const QR_LABEL_LAYOUT_STORAGE_KEY = 'rdf_qr_label_layout';
     const QR_LABEL_LAYOUT_DEFAULT = { widthMm: 70, heightMm: 36, paddingMm: 3 };
+    const QR_LABEL_STYLE_STORAGE_KEY = 'rdf_qr_label_style';
+    const QR_LABEL_STYLE_DEFAULT = { fontFamily: 'kanit', fontSizePx: 10, textColor: '#1E2A28', dormitoryName: '' };
+    const QR_LABEL_FONT_STACKS = {
+      kanit: "'Kanit', 'Leelawadee UI', 'Tahoma', sans-serif",
+      leelawadee: "'Leelawadee UI', 'Tahoma', sans-serif",
+      tahoma: "'Tahoma', sans-serif"
+    };
 
     function getQrFieldSettings() {
       try {
@@ -1892,6 +1930,27 @@
       localStorage.setItem(QR_LABEL_LAYOUT_STORAGE_KEY, JSON.stringify(normalizeQrLabelLayout(layout)));
     }
 
+    function normalizeQrLabelStyle(style) {
+      const fontFamily = QR_LABEL_FONT_STACKS[style?.fontFamily] ? style.fontFamily : QR_LABEL_STYLE_DEFAULT.fontFamily;
+      const fontSizePx = clampNumber(style?.fontSizePx, QR_LABEL_STYLE_DEFAULT.fontSizePx, 6, 20);
+      const rawColor = String(style?.textColor || QR_LABEL_STYLE_DEFAULT.textColor).trim();
+      const textColor = /^#[0-9a-f]{6}$/i.test(rawColor) ? rawColor : QR_LABEL_STYLE_DEFAULT.textColor;
+      const dormitoryName = String(style?.dormitoryName || '').trim().slice(0, 100);
+      return { fontFamily, fontSizePx, textColor, dormitoryName };
+    }
+
+    function getQrLabelStyleSettings() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(QR_LABEL_STYLE_STORAGE_KEY));
+        if (saved && typeof saved === 'object') return normalizeQrLabelStyle(saved);
+      } catch (e) { /* ignore malformed storage, fall through to default */ }
+      return normalizeQrLabelStyle(QR_LABEL_STYLE_DEFAULT);
+    }
+
+    function saveQrLabelStyleSettings(style) {
+      localStorage.setItem(QR_LABEL_STYLE_STORAGE_KEY, JSON.stringify(normalizeQrLabelStyle(style)));
+    }
+
     function setQrLabelLayoutInputs(layout) {
       const width = document.getElementById('qrLabelWidthMm');
       const height = document.getElementById('qrLabelHeightMm');
@@ -1906,6 +1965,26 @@
         widthMm: document.getElementById('qrLabelWidthMm')?.value,
         heightMm: document.getElementById('qrLabelHeightMm')?.value,
         paddingMm: document.getElementById('qrLabelPaddingMm')?.value
+      });
+    }
+
+    function setQrLabelStyleInputs(style) {
+      const font = document.getElementById('qrLabelFontFamily');
+      const size = document.getElementById('qrLabelFontSizePx');
+      const color = document.getElementById('qrLabelTextColor');
+      const dormitory = document.getElementById('qrLabelDormitoryName');
+      if (font) font.value = style.fontFamily;
+      if (size) size.value = style.fontSizePx;
+      if (color) color.value = style.textColor;
+      if (dormitory) dormitory.value = style.dormitoryName;
+    }
+
+    function readQrLabelStyleInputs() {
+      return normalizeQrLabelStyle({
+        fontFamily: document.getElementById('qrLabelFontFamily')?.value,
+        fontSizePx: document.getElementById('qrLabelFontSizePx')?.value,
+        textColor: document.getElementById('qrLabelTextColor')?.value,
+        dormitoryName: document.getElementById('qrLabelDormitoryName')?.value
       });
     }
 
@@ -1970,10 +2049,11 @@
       return `${d}/${m}/${buddhistYear}`;
     }
 
-    function formatQrFieldValue(a, key) {
+    function formatQrFieldValue(a, key, style) {
       if (key === 'category') return CATEGORY_LABELS[a.category] || a.category || '';
       if (key === 'price') return a.price ? parseFloat(a.price).toLocaleString() + ' บ.' : '';
       if (key === 'purchaseDate') return formatThaiDate(a.purchaseDate);
+      if (key === 'dormitory') return style?.dormitoryName || a.dormitory || '';
       return a[key] || '';
     }
 
@@ -4344,16 +4424,17 @@
 
     function buildLabelHtml(a) {
       const fields = getQrFieldSettings();
+      const style = getQrLabelStyleSettings();
       // First selected field prints bold/larger (like a title); the rest are
       // smaller detail lines — mirrors the old fixed name/id/location look.
       const lines = fields.map((key, i) => {
-        const value = formatQrFieldValue(a, key);
+        const value = formatQrFieldValue(a, key, style);
         if (!value) return '';
         const cls = i === 0 ? 'pl-name' : (i === 1 ? 'pl-id' : 'pl-loc');
         return `<p class="${cls}">${escapeHtml(value)}</p>`;
       }).join('');
       return `
-        <div class="print-label">
+        <div class="print-label" style="--qr-label-font-family:${style.fontFamily ? QR_LABEL_FONT_STACKS[style.fontFamily] : QR_LABEL_FONT_STACKS.kanit};--qr-label-font-size:${style.fontSizePx}px;--qr-label-text-color:${style.textColor};">
           <img src="${escapeHtml(getAssetQrImageUrl(a))}" alt="QR Code" loading="eager" decoding="sync">
           <div class="pl-text">${lines}</div>
         </div>
@@ -4372,8 +4453,9 @@
       _qrPreviewAsset = a;
 
       const fields = getQrFieldSettings();
+      const style = getQrLabelStyleSettings();
       const lines = fields.map(key => {
-        const value = formatQrFieldValue(a, key);
+        const value = formatQrFieldValue(a, key, style);
         if (!value) return '';
         const def = QR_FIELD_DEFS.find(f => f.key === key);
         const label = def ? def.label : key;
@@ -4406,6 +4488,7 @@
     function openQrSettingsModal() {
       const selected = getQrFieldSettings();
       setQrLabelLayoutInputs(getQrLabelLayoutSettings());
+      setQrLabelStyleInputs(getQrLabelStyleSettings());
       const container = document.getElementById('qrFieldOptions');
       container.innerHTML = QR_FIELD_DEFS.map(f => `
         <label class="flex items-center gap-2 py-1.5 text-sm cursor-pointer">
@@ -4427,6 +4510,7 @@
       const ordered = QR_FIELD_DEFS.map(f => f.key).filter(k => checked.includes(k));
       saveQrFieldSettings(ordered);
       saveQrLabelLayoutSettings(readQrLabelLayoutInputs());
+      saveQrLabelStyleSettings(readQrLabelStyleInputs());
       closeQrSettingsModal();
       Swal.fire({ icon: 'success', title: 'บันทึกการตั้งค่าป้าย QR แล้ว', timer: 1200, showConfirmButton: false });
     }
@@ -4530,7 +4614,8 @@
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {
-          const qrSize = 300, padding = 18, textBlockHeight = 66;
+          const style = getQrLabelStyleSettings();
+          const qrSize = 300, padding = 18, textBlockHeight = 92;
           const canvas = document.createElement('canvas');
           canvas.width = qrSize + padding * 2;
           canvas.height = qrSize + padding * 2 + textBlockHeight;
@@ -4540,15 +4625,20 @@
           ctx.drawImage(img, padding, padding, qrSize, qrSize);
 
           ctx.textAlign = 'center';
-          const fontStack = '"Leelawadee UI","Tahoma",sans-serif'; // Thai-capable on Windows
+          const fontStack = QR_LABEL_FONT_STACKS[style.fontFamily] || QR_LABEL_FONT_STACKS.kanit;
           const name = (asset.itemName || '').length > 30 ? asset.itemName.slice(0, 29) + '…' : (asset.itemName || '');
-          ctx.fillStyle = '#111827';
-          ctx.font = 'bold 20px ' + fontStack;
+          const nameFontSize = Math.round(clampNumber(style.fontSizePx, 10, 6, 20) * 2);
+          const detailFontSize = Math.max(12, Math.round(nameFontSize * .78));
+          ctx.fillStyle = style.textColor;
+          ctx.font = 'bold ' + nameFontSize + 'px ' + fontStack;
           ctx.fillText(name, canvas.width / 2, qrSize + padding * 2 + 26);
 
-          ctx.fillStyle = '#4b5563';
-          ctx.font = '16px ' + fontStack;
+          ctx.globalAlpha = .82;
+          ctx.font = detailFontSize + 'px ' + fontStack;
           ctx.fillText('รหัส: ' + (asset.inventoryId || ''), canvas.width / 2, qrSize + padding * 2 + 50);
+          const dormitory = style.dormitoryName || asset.dormitory || '';
+          if (dormitory) ctx.fillText(dormitory, canvas.width / 2, qrSize + padding * 2 + 74);
+          ctx.globalAlpha = 1;
 
           resolve(canvas);
         };
